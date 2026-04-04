@@ -7,6 +7,7 @@ import ProfilePage from '@/pages/auth/Profile';
 import DashboardPage from '@/pages/dashboard/index';
 import ApplicationsPage from '@/pages/applications/index';
 import EditApplicationPage from '@/pages/applications/edit';
+import MonitorApplicationPage from '@/pages/applications/monitor';
 import UsersPage from '@/pages/users/index';
 import EditUserPage from '@/pages/users/edit';
 import PlaygroundPage from '@/pages/playground/index';
@@ -72,6 +73,13 @@ const editApplicationRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/applications/$id/edit',
     component: EditApplicationPage,
+    beforeLoad: requireAuth,
+});
+
+const monitorApplicationRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/applications/$id/monitor',
+    component: MonitorApplicationPage,
     beforeLoad: requireAuth,
 });
 
@@ -144,6 +152,7 @@ const routeTree = rootRoute.addChildren([
     profileRoute,
     applicationsRoute,
     editApplicationRoute,
+    monitorApplicationRoute,
     usersRoute,
     editUserRoute,
     playgroundRoute,

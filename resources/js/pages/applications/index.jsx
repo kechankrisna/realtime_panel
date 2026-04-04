@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/useToast';
-import { Copy, Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Copy, Plus, Pencil, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 
 function CopyButton({ value }) {
     const copy = () => {
@@ -156,9 +156,14 @@ export default function ApplicationsPage() {
                                     <td className="px-4 py-3 text-muted-foreground">{app.updater?.name ?? '—'}</td>
                                     <td className="px-4 py-3 text-muted-foreground">{new Date(app.created_at).toLocaleDateString()}</td>
                                     <td className="px-4 py-3">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link to={`/applications/${app.id}/edit`}><Pencil className="h-3 w-3" /></Link>
-                                        </Button>
+                                        <div className="flex items-center gap-1.5">
+                                            <Button variant="outline" size="sm" asChild title="Monitor live events">
+                                                <Link to={`/applications/${app.id}/monitor`}><Activity className="h-3 w-3" /></Link>
+                                            </Button>
+                                            <Button variant="outline" size="sm" asChild title="Edit application">
+                                                <Link to={`/applications/${app.id}/edit`}><Pencil className="h-3 w-3" /></Link>
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

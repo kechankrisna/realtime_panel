@@ -101,11 +101,17 @@ class TienLenController extends Controller
             $options
         );
 
-        $pusher->trigger(
-            'tienlen-' . $validated['room_code'],
-            'tienlen-event',
-            array_merge(['type' => $validated['type']], $validated['payload'])
-        );
+        $payload = array_merge(['type' => $validated['type']], $validated['payload']);
+        $channel = 'tienlen-' . $validated['room_code'];
+
+        $pusher->trigger($channel, 'tienlen-event', $payload);
+
+        // Relay to dedicated monitor channel.
+        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+            'channel' => $channel,
+            'event'   => 'tienlen-event',
+            'data'    => $payload,
+        ]);
 
         return response()->json(['ok' => true]);
     }

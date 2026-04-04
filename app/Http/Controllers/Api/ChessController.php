@@ -94,11 +94,17 @@ class ChessController extends Controller
             $options
         );
 
-        $pusher->trigger(
-            'chess-' . $validated['room_code'],
-            'chess-event',
-            array_merge(['type' => $validated['type']], $validated['payload'])
-        );
+        $payload = array_merge(['type' => $validated['type']], $validated['payload']);
+        $channel = 'chess-' . $validated['room_code'];
+
+        $pusher->trigger($channel, 'chess-event', $payload);
+
+        // Relay to dedicated monitor channel.
+        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+            'channel' => $channel,
+            'event'   => 'chess-event',
+            'data'    => $payload,
+        ]);
 
         return response()->json(['ok' => true]);
     }

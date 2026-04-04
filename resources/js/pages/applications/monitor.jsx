@@ -185,13 +185,11 @@ export default function ApplicationMonitorPage() {
     const [filter, setFilter] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [eventsPerMin, setEventsPerMin] = useState(0);
-    const [channelCount, setChannelCount] = useState(0);
 
     const pausedRef = useRef(false);
     const eventIdRef = useRef(0);
     const echoRef = useRef(null);
     const eventsRef = useRef([]); // mirror of events for rate calculation
-    const subscribedChannelsRef = useRef(new Set());
 
     const togglePause = () => {
         pausedRef.current = !pausedRef.current;
@@ -232,9 +230,11 @@ export default function ApplicationMonitorPage() {
         return () => clearInterval(iv);
     }, []);
 
-    // Patch the Pusher WebSocket to intercept all frames
-    const patchSocket = useCallback((pusher) => {
-        // Small delay — Pusher sets up the socket asynchronously
+    // Patch the Pusher WebSocket to intercept all frames (system events, pings, etc.)
+    // Server-side app events arrive wrapped as monitor.event on _monitor_{id};
+    // we unwrap them to show the real channel and event name.
+    const patchSocket = useCallback((pusher, appId) => {
+        const monitorChannel = `_monitor_${appId}`;
         const tryPatch = (attempt = 0) => {
             const ws = pusher.connection.socket;
             if (!ws && attempt < 20) {
@@ -248,12 +248,24 @@ export default function ApplicationMonitorPage() {
                 if (!pausedRef.current) {
                     try {
                         const parsed = JSON.parse(msgEvent.data);
+                        let eventName = parsed.event ?? '(unknown)';
+                        let channel   = parsed.channel ?? null;
+                        let data      = parsed.data ?? null;
+
+                        // Unwrap server-side app events relayed through the monitor channel
+                        if (eventName === 'monitor.event' && channel === monitorChannel) {
+                            const inner = typeof data === 'string' ? JSON.parse(data) : data;
+                            eventName = inner?.event ?? eventName;
+                            channel   = inner?.channel ?? channel;
+                            data      = inner?.data ?? null;
+                        }
+
                         const ev = {
                             id: ++eventIdRef.current,
                             ts: new Date(),
-                            event: parsed.event ?? '(unknown)',
-                            channel: parsed.channel ?? null,
-                            data: parsed.data ?? null,
+                            event: eventName,
+                            channel,
+                            data,
                             raw: parsed,
                         };
                         eventsRef.current = [ev, ...eventsRef.current].slice(0, 500);
@@ -267,13 +279,12 @@ export default function ApplicationMonitorPage() {
     }, []);
 
     // Connect Echo when app key is available.
-    // The setTimeout(0) defers creation so that React Strict Mode's synchronous
-    // cleanup (which double-invokes effects in dev) only cancels the timer
-    // instead of closing a WebSocket that is still in CONNECTING state, which
-    // would produce "WebSocket is closed before the connection is established".
+    // setTimeout(0) prevents React Strict Mode's synchronous cleanup from closing
+    // a WebSocket that is still in CONNECTING state.
     useEffect(() => {
-        if (!app?.key) return;
+        if (!app?.key || !app?.id) return;
 
+        const appId = app.id;
         let echo = null;
         const timer = setTimeout(() => {
             echo = createEcho({ key: app.key });
@@ -281,15 +292,18 @@ export default function ApplicationMonitorPage() {
             const pusher = echo.connector.pusher;
             const conn = pusher.connection;
 
-            conn.bind('connected', () => {
+            const onConnected = () => {
                 setConnected(true);
                 setConnectedAt(new Date());
-                patchSocket(pusher);
-            });
-            conn.bind('reconnected', () => {
-                setConnected(true);
-                patchSocket(pusher);
-            });
+                patchSocket(pusher, appId);
+                // Subscribe to the dedicated monitor relay channel.
+                // Every trigger controller sends a monitor.event here, so we receive
+                // all app events regardless of which channel they were originally on.
+                echo.channel(`_monitor_${appId}`);
+            };
+
+            conn.bind('connected',    onConnected);
+            conn.bind('reconnected',  onConnected);
             conn.bind('disconnected', () => setConnected(false));
             conn.bind('unavailable',  () => setConnected(false));
             conn.bind('failed',       () => setConnected(false));
@@ -302,37 +316,8 @@ export default function ApplicationMonitorPage() {
                 echoRef.current = null;
             }
             setConnected(false);
-            subscribedChannelsRef.current = new Set();
-            setChannelCount(0);
         };
-    }, [app?.key, patchSocket]);
-
-    // Subscribe to all active channels so Soketi delivers event frames to this connection.
-    // Without subscriptions the ws.onmessage patch never sees real event messages.
-    useEffect(() => {
-        if (!connected || !app?.id) return;
-
-        const fetchAndSubscribe = () => {
-            api.get(`/applications/${app.id}/channels`).then((r) => {
-                const names = r.data.channels ?? [];
-                const echo = echoRef.current;
-                if (!echo) return;
-                let added = 0;
-                names.forEach((name) => {
-                    if (!subscribedChannelsRef.current.has(name)) {
-                        subscribedChannelsRef.current.add(name);
-                        echo.channel(name); // silent subscribe
-                        added++;
-                    }
-                });
-                if (added > 0) setChannelCount(subscribedChannelsRef.current.size);
-            }).catch(() => {});
-        };
-
-        fetchAndSubscribe();
-        const iv = setInterval(fetchAndSubscribe, 10_000);
-        return () => clearInterval(iv);
-    }, [connected, app?.id]);
+    }, [app?.key, app?.id, patchSocket]);
 
     // Filtered events
     const filterLower = filter.toLowerCase();
@@ -395,11 +380,10 @@ export default function ApplicationMonitorPage() {
                 </div>
 
                 {/* Stats bar */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 flex-shrink-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-shrink-0">
                     {[
                         { label: 'Total Events', value: events.length, accent: 'text-foreground' },
                         { label: 'Displayed', value: displayed.length, accent: 'text-muted-foreground' },
-                        { label: 'Channels', value: channelCount, accent: 'text-violet-600 dark:text-violet-400' },
                         { label: 'Events / min', value: eventsPerMin, accent: 'text-emerald-600 dark:text-emerald-400' },
                         { label: 'Uptime', value: connected ? (uptime || '0s') : '—', accent: 'text-blue-600 dark:text-blue-400' },
                     ].map(({ label, value, accent }) => (

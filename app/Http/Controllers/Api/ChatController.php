@@ -36,6 +36,14 @@ class ChatController extends Controller
 
         $pusher->trigger($validated['channel'], 'message', $validated['data']);
 
+        // Relay to dedicated monitor channel so the monitoring page receives events
+        // regardless of whether it is currently subscribed to the original channel.
+        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+            'channel' => $validated['channel'],
+            'event'   => 'message',
+            'data'    => $validated['data'],
+        ]);
+
         return response()->json(['ok' => true]);
     }
 }

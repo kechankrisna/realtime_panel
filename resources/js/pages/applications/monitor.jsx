@@ -266,31 +266,41 @@ export default function ApplicationMonitorPage() {
         tryPatch();
     }, []);
 
-    // Connect Echo when app key is available
+    // Connect Echo when app key is available.
+    // The setTimeout(0) defers creation so that React Strict Mode's synchronous
+    // cleanup (which double-invokes effects in dev) only cancels the timer
+    // instead of closing a WebSocket that is still in CONNECTING state, which
+    // would produce "WebSocket is closed before the connection is established".
     useEffect(() => {
         if (!app?.key) return;
 
-        const echo = createEcho({ key: app.key });
-        echoRef.current = echo;
-        const pusher = echo.connector.pusher;
-        const conn = pusher.connection;
+        let echo = null;
+        const timer = setTimeout(() => {
+            echo = createEcho({ key: app.key });
+            echoRef.current = echo;
+            const pusher = echo.connector.pusher;
+            const conn = pusher.connection;
 
-        conn.bind('connected', () => {
-            setConnected(true);
-            setConnectedAt(new Date());
-            patchSocket(pusher);
-        });
-        conn.bind('reconnected', () => {
-            setConnected(true);
-            patchSocket(pusher);
-        });
-        conn.bind('disconnected', () => setConnected(false));
-        conn.bind('unavailable',  () => setConnected(false));
-        conn.bind('failed',       () => setConnected(false));
+            conn.bind('connected', () => {
+                setConnected(true);
+                setConnectedAt(new Date());
+                patchSocket(pusher);
+            });
+            conn.bind('reconnected', () => {
+                setConnected(true);
+                patchSocket(pusher);
+            });
+            conn.bind('disconnected', () => setConnected(false));
+            conn.bind('unavailable',  () => setConnected(false));
+            conn.bind('failed',       () => setConnected(false));
+        }, 0);
 
         return () => {
-            echo.disconnect();
-            echoRef.current = null;
+            clearTimeout(timer);
+            if (echo) {
+                echo.disconnect();
+                echoRef.current = null;
+            }
             setConnected(false);
             subscribedChannelsRef.current = new Set();
             setChannelCount(0);

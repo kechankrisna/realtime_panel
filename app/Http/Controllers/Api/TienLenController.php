@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Application;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Pusher\Pusher;
+
+class TienLenController extends Controller
+{
+    /**
+     * Creator registers an open room (seat 1 of 4 claimed).
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'application_id' => ['required', 'integer'],
+            'room_code'      => ['required', 'string', 'max:10'],
+        ]);
+
+        Application::ownershipAware()
+            ->where('enabled', true)
+            ->findOrFail($validated['application_id']);
+
+        Cache::put(
+            'tienlen_room_' . $validated['room_code'],
+            [
+                'status'         => 'waiting',
+                'seats'          => 1,
+                'application_id' => $validated['application_id'],
+                'creator_id'     => Auth::id(),
+            ],
+            now()->addMinutes(90)
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Player claims one of the remaining open seats.
+     */
+    public function join(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'application_id' => ['required', 'integer'],
+            'room_code'      => ['required', 'string', 'max:10'],
+        ]);
+
+        $key  = 'tienlen_room_' . $validated['room_code'];
+        $room = Cache::get($key);
+
+        if (!$room) {
+            return response()->json(['message' => 'Room not found.'], 404);
+        }
+
+        if ($room['status'] !== 'waiting') {
+            return response()->json(['message' => 'Room is full or the game has already started.'], 409);
+        }
+
+        if ((int) $room['application_id'] !== (int) $validated['application_id']) {
+            return response()->json(['message' => 'Wrong Soketi application for this room.'], 422);
+        }
+
+        $newSeats = $room['seats'] + 1;
+        $newStatus = $newSeats >= 4 ? 'playing' : 'waiting';
+
+        Cache::put($key, array_merge($room, [
+            'seats'  => $newSeats,
+            'status' => $newStatus,
+        ]), now()->addMinutes(90));
+
+        return response()->json(['ok' => true, 'seats' => $newSeats, 'full' => $newSeats >= 4]);
+    }
+
+    /**
+     * Broadcast a Tien Len game event to all players in the room.
+     */
+    public function trigger(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'application_id' => ['required', 'integer'],
+            'room_code'      => ['required', 'string', 'max:50'],
+            'type'           => ['required', 'string', 'in:seat,deal,play,pass,win,chat'],
+            'payload'        => ['required', 'array'],
+        ]);
+
+        $app = Application::ownershipAware()
+            ->where('enabled', true)
+            ->findOrFail($validated['application_id']);
+
+        $options = config('broadcasting.connections.pusher.options');
+
+        $pusher = new Pusher(
+            $app->key,
+            $app->secret,
+            $app->id,
+            $options
+        );
+
+        $pusher->trigger(
+            'tienlen-' . $validated['room_code'],
+            'tienlen-event',
+            array_merge(['type' => $validated['type']], $validated['payload'])
+        );
+
+        return response()->json(['ok' => true]);
+    }
+}

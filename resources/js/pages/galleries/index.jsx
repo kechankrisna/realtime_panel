@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Zap, Radio, BarChart2, Crown } from 'lucide-react';
+import { MessageCircle, Zap, Radio, BarChart2, Crown, Spade } from 'lucide-react';
 
 const apps = [
     {
@@ -24,6 +24,16 @@ const apps = [
         badgeVariant: 'default',
         color: 'text-orange-500',
         bg: 'bg-orange-500/10',
+    },
+    {
+        title: 'Tiến Lên',
+        description: 'Vietnamese card game for 4 players. Play vs bots or host a live room. First to empty their hand wins.',
+        href: '/galleries/tienlen',
+        icon: Spade,
+        badge: 'Live',
+        badgeVariant: 'default',
+        color: 'text-red-500',
+        bg: 'bg-red-500/10',
     },
     {
         title: 'Live Events',

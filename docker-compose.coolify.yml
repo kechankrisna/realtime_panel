@@ -6,7 +6,7 @@
 
 services:
     soketi-apps:
-        image: ghcr.io/rahulhaque/soketi-apps-filament-alpine:latest
+        image: ghcr.io/kechankrisna/soketi-apps-alpine:latest
         environment:
             - SERVICE_FQDN_SOKETIAPPMANAGER_8080
             - AUTORUN_ENABLED=true

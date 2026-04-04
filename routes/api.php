@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\TienLenController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,4 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chess/rooms', [ChessController::class, 'store']);
     Route::post('/chess/rooms/join', [ChessController::class, 'join']);
     Route::post('/chess/trigger', [ChessController::class, 'trigger']);
+
+    Route::post('/tienlen/rooms', [TienLenController::class, 'store']);
+    Route::post('/tienlen/rooms/join', [TienLenController::class, 'join']);
+    Route::post('/tienlen/trigger', [TienLenController::class, 'trigger']);
 });

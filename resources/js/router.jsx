@@ -13,6 +13,7 @@ import PlaygroundPage from '@/pages/playground/index';
 import GalleriesPage from '@/pages/galleries/index';
 import GalleriesChatPage from '@/pages/galleries/chat';
 import GalleriesChessPage from '@/pages/galleries/chess';
+import GalleriesTienLenPage from '@/pages/galleries/tienlen';
 import ClientDocPage from '@/pages/documentation/client';
 import ServerDocPage from '@/pages/documentation/server';
 
@@ -116,6 +117,13 @@ const galleriesChessRoute = createRoute({
     beforeLoad: requireAuth,
 });
 
+const galleriesTienLenRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/galleries/tienlen',
+    component: GalleriesTienLenPage,
+    beforeLoad: requireAuth,
+});
+
 const clientDocRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/documentation/client',
@@ -142,6 +150,7 @@ const routeTree = rootRoute.addChildren([
     galleriesRoute,
     galleriesChatRoute,
     galleriesChessRoute,
+    galleriesTienLenRoute,
     clientDocRoute,
     serverDocRoute,
 ]);

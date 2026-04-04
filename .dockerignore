@@ -1,0 +1,16 @@
+.github
+.vscode
+.idea
+.fleet
+docker
+screenshots
+Dockerfile.coolify
+nginx.conf
+soketi.service
+.env
+.env.backup
+.env.production
+.env.docker
+.env.coolify.example
+.env.example
+.cruise

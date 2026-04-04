@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soketi Chat</title>
+
+    <script src="https://js.pusher.com/8.4/pusher.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body, #root { height: 100%; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #e5ddd5; }
+
+        /* ── Setup screen ──────────────────────────── */
+        .setup-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+        }
+        .setup-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 36px 32px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
+        .setup-card h1 { font-size: 1.55rem; color: #128C7E; margin-bottom: 6px; }
+        .setup-card .subtitle { font-size: 0.85rem; color: #888; margin-bottom: 24px; }
+        .setup-card label { display: block; font-size: 0.82rem; font-weight: 700; color: #555; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .setup-card input, .setup-card select {
+            width: 100%; padding: 10px 13px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+            font-size: 0.95rem; margin-bottom: 14px; outline: none; transition: border-color .2s;
+        }
+        .setup-card input:focus, .setup-card select:focus { border-color: #128C7E; }
+        .setup-divider { font-size: 0.75rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin: 4px 0 16px; display: flex; align-items: center; gap: 8px; }
+        .setup-divider::before, .setup-divider::after { content: ''; flex: 1; height: 1px; background: #eee; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+        .setup-error { background: #fdecea; border: 1px solid #f44336; color: #c62828; font-size: 0.85rem; padding: 10px 13px; border-radius: 8px; margin-bottom: 16px; }
+        .btn-join {
+            width: 100%; padding: 13px; background: #128C7E; color: #fff; border: none;
+            border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 4px;
+            transition: background .2s;
+        }
+        .btn-join:hover { background: #0e7168; }
+
+        /* ── Chat layout ───────────────────────────── */
+        .chat-wrap { height: 100vh; display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; box-shadow: 0 0 40px rgba(0,0,0,0.15); }
+
+        .chat-header {
+            background: #128C7E;
+            color: #fff;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .chat-header .room { font-weight: 700; font-size: 1.05rem; }
+        .chat-header .conn  { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+        .chat-header .me    { font-size: 0.82rem; opacity: 0.85; margin-right: 10px; }
+        .btn-leave {
+            background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4);
+            color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.83rem;
+        }
+        .btn-leave:hover { background: rgba(255,255,255,0.30); }
+
+        /* ── Messages ──────────────────────────────── */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: #e5ddd5;
+        }
+        .msg-row { display: flex; flex-direction: column; }
+        .msg-row.mine   { align-items: flex-end; }
+        .msg-row.theirs { align-items: flex-start; }
+        .msg-row.system { align-items: center; margin: 6px 0; }
+
+        .msg-sender { font-size: 0.73rem; font-weight: 700; color: #128C7E; padding: 0 12px; margin-bottom: 2px; }
+        .msg-bubble {
+            max-width: 62%;
+            padding: 9px 13px;
+            font-size: 0.94rem;
+            line-height: 1.45;
+            word-break: break-word;
+            position: relative;
+        }
+        .mine   .msg-bubble { background: #DCF8C6; border-radius: 16px 16px 4px 16px; color: #111; }
+        .theirs .msg-bubble { background: #fff;    border-radius: 16px 16px 16px 4px; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .system .msg-bubble { background: rgba(0,0,0,0.07); color: #555; font-size: 0.8rem; border-radius: 12px; padding: 5px 16px; text-align: center; }
+
+        .msg-ts { font-size: 0.68rem; color: #aaa; margin-top: 2px; padding: 0 4px; }
+
+        /* ── Input bar ─────────────────────────────── */
+        .chat-input {
+            flex-shrink: 0;
+            background: #f0f0f0;
+            padding: 10px 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid #ddd;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 11px 18px;
+            border: none;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .btn-send-msg {
+            background: #128C7E; color: #fff; border: none;
+            border-radius: 50%; width: 44px; height: 44px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: background .2s;
+        }
+        .btn-send-msg:hover:not(:disabled) { background: #0e7168; }
+        .btn-send-msg:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-send-msg svg { width: 20px; height: 20px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useCallback, useEffect } = React;
+
+        /* ── Pusher HTTP API trigger helper ─────────────────────── */
+        function buildTriggerUrl({ appId, appKey, appSecret, host, port, tls }, body) {
+            const protocol = tls ? 'https' : 'http';
+            const ts       = Math.floor(Date.now() / 1000).toString();
+            const bodyMd5  = CryptoJS.MD5(body).toString();
+            const paramStr = `auth_key=${appKey}&auth_timestamp=${ts}&auth_version=1.0&body_md5=${bodyMd5}`;
+            const sig      = CryptoJS.HmacSHA256(`POST\n/apps/${appId}/events\n${paramStr}`, appSecret).toString();
+            return `${protocol}://${host}:${port}/apps/${appId}/events?${paramStr}&auth_signature=${sig}`;
+        }
+
+        /* ── Setup Screen ────────────────────────────────────────── */
+        function SetupScreen({ onJoin }) {
+            const [name,      setName]      = useState('');
+            const [appKey,    setAppKey]    = useState('58b4541e989d2125fa77b17cba6159ff');
+            const [appId,     setAppId]     = useState('1');
+            const [appSecret, setAppSecret] = useState('949d38e8e53ac07d2447aeb6452d4c6f');
+            const [host,      setHost]      = useState('localhost');
+            const [port,      setPort]      = useState('80');
+            const [tls,       setTls]       = useState(false);
+            const [channel,   setChannel]   = useState('chat-room');
+            const [error,     setError]     = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!name.trim())      return setError('Please enter your name.');
+                if (!appKey.trim())    return setError('App Key is required.');
+                if (!appId.trim())     return setError('App ID is required.');
+                if (!appSecret.trim()) return setError('App Secret is required.');
+                if (!channel.trim())   return setError('Channel name is required.');
+                setError('');
+                onJoin({
+                    name:      name.trim(),
+                    appKey:    appKey.trim(),
+                    appId:     appId.trim(),
+                    appSecret: appSecret.trim(),
+                    host:      host.trim(),
+                    port:      port.trim(),
+                    tls,
+                    channel:   channel.trim(),
+                });
+            };
+
+            return (
+                <div className="setup-wrap">
+                    <div className="setup-card">
+                        <h1>💬 Soketi Chat</h1>
+                        <p className="subtitle">Real-time chat powered by Soketi — stateless, no history saved.</p>
+
+                        {error && <div className="setup-error">{error}</div>}
+
+                        <form onSubmit={handleSubmit}>
+                            <label>Your Name</label>
+                            <input type="text" value={name} onChange={e => setName(e.target.value)}
+                                placeholder="e.g. Alice" autoFocus />
+
+                            <label>Channel (Room)</label>
+                            <input type="text" value={channel} onChange={e => setChannel(e.target.value)} />
+
+                            <div className="setup-divider">Connection Settings</div>
+
+                            <label>App Key</label>
+                            <input type="text" value={appKey} onChange={e => setAppKey(e.target.value)} />
+
+                            <label>App ID</label>
+                            <input type="text" value={appId} onChange={e => setAppId(e.target.value)} />
+
+                            <label>App Secret</label>
+                            <input type="password" value={appSecret} onChange={e => setAppSecret(e.target.value)} />
+
+                            <div className="field-row">
+                                <div>
+                                    <label>Host</label>
+                                    <input type="text" value={host} onChange={e => setHost(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label>Port</label>
+                                    <input type="number" value={port} onChange={e => setPort(e.target.value)} />
+                                </div>
+                            </div>
+
+                            <label>Force TLS</label>
+                            <select value={tls ? 'true' : 'false'} onChange={e => setTls(e.target.value === 'true')}>
+                                <option value="false">false</option>
+                                <option value="true">true</option>
+                            </select>
+
+                            <button type="submit" className="btn-join">Join Chat →</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ── Chat Screen ─────────────────────────────────────────── */
+        function ChatScreen({ config, onLeave }) {
+            const { name: myName, channel } = config;
+
+            const [messages,  setMessages]  = useState([]);
+            const [inputText, setInputText] = useState('');
+            const [connected, setConnected] = useState(false);
+            const [sending,   setSending]   = useState(false);
+
+            const pusherRef  = useRef(null);
+            const bottomRef  = useRef(null);
+            const inputRef   = useRef(null);
+
+            /* system message helper */
+            const addSystem = useCallback((text) => {
+                setMessages(prev => [...prev, {
+                    id:      `sys-${Date.now()}-${Math.random()}`,
+                    type:    'system',
+                    content: text,
+                }]);
+            }, []);
+
+            /* auto-scroll to bottom */
+            useEffect(() => {
+                bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            /* connect on mount, disconnect on unmount */
+            useEffect(() => {
+                const { appKey, host, port, tls } = config;
+                const portNum = parseInt(port, 10);
+
+                const pusher = new Pusher(appKey, {
+                    cluster:           'mt1',
+                    wsHost:            host,
+                    wsPort:            tls ? undefined : portNum,
+                    wssPort:           tls ? portNum : undefined,
+                    forceTLS:          tls,
+                    encrypted:         true,
+                    disableStats:      true,
+                    enabledTransports: ['ws', 'wss'],
+                });
+
+                pusherRef.current = pusher;
+
+                pusher.connection.bind('connected',    () => { setConnected(true);  addSystem('Connected to server.'); });
+                pusher.connection.bind('disconnected', () => { setConnected(false); addSystem('Disconnected.'); });
+                pusher.connection.bind('error',        () => { addSystem('Connection error.'); });
+
+                const ch = pusher.subscribe(channel);
+
+                ch.bind('pusher:subscription_succeeded', () => {
+                    addSystem(`You joined #${channel}`);
+                });
+
+                ch.bind('message', (data) => {
+                    setMessages(prev => {
+                        // Deduplicate: own messages are added optimistically
+                        if (prev.some(m => m.id === data.id)) return prev;
+                        return [...prev, {
+                            id:      data.id,
+                            type:    'chat',
+                            sender:  data.sender,
+                            content: data.content,
+                            isMine:  data.sender === myName,
+                            ts:      new Date().toLocaleTimeString(),
+                        }];
+                    });
+                });
+
+                return () => pusher.disconnect();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            }, []); // intentionally run once — config is stable for the lifetime of ChatScreen
+
+            /* send message via Soketi HTTP API */
+            const handleSend = useCallback(async () => {
+                const text = inputText.trim();
+                if (!text || sending || !connected) return;
+
+                const msgId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+                // Optimistic: add own message immediately
+                setMessages(prev => [...prev, {
+                    id:      msgId,
+                    type:    'chat',
+                    sender:  myName,
+                    content: text,
+                    isMine:  true,
+                    ts:      new Date().toLocaleTimeString(),
+                }]);
+                setInputText('');
+                setSending(true);
+
+                const payload = JSON.stringify({
+                    name:    'message',
+                    channel: channel,
+                    data:    JSON.stringify({ id: msgId, sender: myName, content: text }),
+                });
+
+                try {
+                    const url = buildTriggerUrl(config, payload);
+                    const res = await fetch(url, {
+                        method:  'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body:    payload,
+                    });
+                    if (!res.ok) {
+                        const err = await res.text();
+                        addSystem(`Send failed (${res.status}): ${err}`);
+                    }
+                } catch (err) {
+                    addSystem(`Send error: ${err.message}`);
+                } finally {
+                    setSending(false);
+                    inputRef.current?.focus();
+                }
+            }, [inputText, sending, connected, myName, channel, config, addSystem]);
+
+            const handleKeyDown = useCallback((e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+            }, [handleSend]);
+
+            const handleLeave = useCallback(() => {
+                pusherRef.current?.disconnect();
+                onLeave();
+            }, [onLeave]);
+
+            return (
+                <div className="chat-wrap">
+                    {/* Header */}
+                    <div className="chat-header">
+                        <div>
+                            <div className="room">#{channel}</div>
+                            <div className="conn">{connected ? '● Online' : '○ Connecting…'}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <span className="me">as <strong>{myName}</strong></span>
+                            <button className="btn-leave" onClick={handleLeave}>Leave</button>
+                        </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="chat-messages">
+                        {messages.map(msg => {
+                            if (msg.type === 'system') {
+                                return (
+                                    <div key={msg.id} className="msg-row system">
+                                        <div className="msg-bubble">{msg.content}</div>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div key={msg.id} className={`msg-row ${msg.isMine ? 'mine' : 'theirs'}`}>
+                                    {!msg.isMine && <div className="msg-sender">{msg.sender}</div>}
+                                    <div className="msg-bubble">{msg.content}</div>
+                                    <div className="msg-ts">{msg.ts}</div>
+                                </div>
+                            );
+                        })}
+                        <div ref={bottomRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="chat-input">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            placeholder={connected ? 'Type a message… (Enter to send)' : 'Waiting for connection…'}
+                            value={inputText}
+                            onChange={e => setInputText(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            disabled={!connected}
+                            autoFocus
+                        />
+                        <button
+                            className="btn-send-msg"
+                            onClick={handleSend}
+                            disabled={!connected || !inputText.trim() || sending}
+                            title="Send"
+                        >
+                            {/* Paper-plane icon */}
+                            <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ── Root App ────────────────────────────────────────────── */
+        function App() {
+            const [config, setConfig] = useState(null);
+
+            const handleJoin  = useCallback((cfg) => setConfig(cfg), []);
+            const handleLeave = useCallback(() => setConfig(null),   []);
+
+            return config
+                ? <ChatScreen config={config} onLeave={handleLeave} />
+                : <SetupScreen onJoin={handleJoin} />;
+        }
+
+        const container = document.getElementById('root');
+        if (!window.__reactRoot) window.__reactRoot = ReactDOM.createRoot(container);
+        window.__reactRoot.render(<App />);
+    </script>
+</body>
+</html>

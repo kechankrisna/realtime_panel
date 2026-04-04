@@ -1,0 +1,35 @@
+# This dockerfile creates an standalone
+# image for the base application only.
+
+FROM serversideup/php:8.1-fpm-nginx
+
+ENV PHP_OPCACHE_ENABLE=1
+
+USER root
+
+# Install system dependencies + Node.js 20
+RUN apt-get update && apt-get install -y git nano curl \
+    && install-php-extensions intl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Clone the repository
+RUN git clone https://github.com/kechankrisna/soketi-apps /var/www/html
+
+# Set appropriate permission
+RUN chown -R www-data:www-data /var/www/html
+
+# Switch to non-root user
+USER www-data
+
+# Install composer + npm dependencies and build frontend
+RUN composer install --no-interaction --optimize-autoloader --no-dev \
+    && rm -rf /var/www/html/.composer/cache \
+    && npm ci --prefer-offline \
+    && npm run build \
+    && rm -rf node_modules
+
+EXPOSE 8080

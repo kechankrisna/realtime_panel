@@ -28,11 +28,11 @@ function eventCategory(eventName) {
 }
 
 const CATEGORY_STYLE = {
-    system:   { dot: 'bg-zinc-400',  badge: 'bg-zinc-800 text-zinc-300 border-zinc-700',  row: '' },
-    internal: { dot: 'bg-yellow-500', badge: 'bg-yellow-900/60 text-yellow-300 border-yellow-800', row: 'bg-yellow-950/10' },
-    client:   { dot: 'bg-blue-400',  badge: 'bg-blue-900/60 text-blue-300 border-blue-800',   row: 'bg-blue-950/10' },
-    server:   { dot: 'bg-emerald-400', badge: 'bg-emerald-900/60 text-emerald-300 border-emerald-800', row: 'bg-emerald-950/10' },
-    unknown:  { dot: 'bg-zinc-600',  badge: 'bg-zinc-900 text-zinc-500 border-zinc-800',   row: '' },
+    system:   { dot: 'bg-zinc-400',   badge: 'bg-zinc-100 text-zinc-600 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',   row: '' },
+    internal: { dot: 'bg-yellow-500', badge: 'bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-900/60 dark:text-yellow-300 dark:border-yellow-800', row: 'bg-yellow-50/60 dark:bg-yellow-950/10' },
+    client:   { dot: 'bg-blue-400',   badge: 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800',             row: 'bg-blue-50/60 dark:bg-blue-950/10' },
+    server:   { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-800', row: 'bg-emerald-50/60 dark:bg-emerald-950/10' },
+    unknown:  { dot: 'bg-zinc-400',   badge: 'bg-zinc-100 text-zinc-500 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-500 dark:border-zinc-800',               row: '' },
 };
 
 function tryParseData(raw) {
@@ -43,22 +43,22 @@ function tryParseData(raw) {
 
 function JsonTree({ value, depth = 0 }) {
     const [open, setOpen] = useState(depth < 2);
-    if (value === null || value === undefined) return <span className="text-zinc-500">null</span>;
-    if (typeof value === 'boolean') return <span className="text-orange-400">{String(value)}</span>;
-    if (typeof value === 'number') return <span className="text-cyan-400">{value}</span>;
-    if (typeof value === 'string') return <span className="text-green-400">"{value}"</span>;
+    if (value === null || value === undefined) return <span className="text-zinc-400 dark:text-zinc-500">null</span>;
+    if (typeof value === 'boolean') return <span className="text-orange-600 dark:text-orange-400">{String(value)}</span>;
+    if (typeof value === 'number') return <span className="text-cyan-600 dark:text-cyan-400">{value}</span>;
+    if (typeof value === 'string') return <span className="text-emerald-700 dark:text-green-400">"{value}"</span>;
     if (Array.isArray(value)) {
-        if (value.length === 0) return <span className="text-zinc-500">[]</span>;
+        if (value.length === 0) return <span className="text-zinc-400 dark:text-zinc-500">[]</span>;
         return (
             <span>
-                <button onClick={() => setOpen(o => !o)} className="text-zinc-400 hover:text-white">
+                <button onClick={() => setOpen(o => !o)} className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                     {open ? '▾' : '▸'} [{value.length}]
                 </button>
                 {open && (
-                    <div className="ml-4 border-l border-zinc-800 pl-2 mt-0.5 space-y-0.5">
+                    <div className="ml-4 border-l border-zinc-200 dark:border-zinc-800 pl-2 mt-0.5 space-y-0.5">
                         {value.map((v, i) => (
                             <div key={i} className="flex gap-1.5 items-start text-xs">
-                                <span className="text-zinc-600 select-none">{i}:</span>
+                                <span className="text-zinc-400 dark:text-zinc-600 select-none">{i}:</span>
                                 <JsonTree value={v} depth={depth + 1} />
                             </div>
                         ))}
@@ -69,17 +69,17 @@ function JsonTree({ value, depth = 0 }) {
     }
     if (typeof value === 'object') {
         const keys = Object.keys(value);
-        if (keys.length === 0) return <span className="text-zinc-500">{'{}'}</span>;
+        if (keys.length === 0) return <span className="text-zinc-400 dark:text-zinc-500">{'{}'}</span>;
         return (
             <span>
-                <button onClick={() => setOpen(o => !o)} className="text-zinc-400 hover:text-white">
+                <button onClick={() => setOpen(o => !o)} className="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                     {open ? '▾' : '▸'} {'{'}…{'}'} ({keys.length})
                 </button>
                 {open && (
-                    <div className="ml-4 border-l border-zinc-800 pl-2 mt-0.5 space-y-0.5">
+                    <div className="ml-4 border-l border-zinc-200 dark:border-zinc-800 pl-2 mt-0.5 space-y-0.5">
                         {keys.map((k) => (
                             <div key={k} className="flex gap-1.5 items-start text-xs">
-                                <span className="text-purple-400 select-none shrink-0">"{k}":</span>
+                                <span className="text-purple-600 dark:text-purple-400 select-none shrink-0">"{k}":</span>
                                 <JsonTree value={value[k]} depth={depth + 1} />
                             </div>
                         ))}
@@ -88,7 +88,7 @@ function JsonTree({ value, depth = 0 }) {
             </span>
         );
     }
-    return <span className="text-zinc-300">{String(value)}</span>;
+    return <span className="text-zinc-700 dark:text-zinc-300">{String(value)}</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,12 +105,12 @@ function EventRow({ ev, selected, onSelect }) {
         <>
             <tr
                 onClick={() => onSelect(isSelected ? null : ev.id)}
-                className={`cursor-pointer select-none border-b border-zinc-900 transition-colors hover:bg-zinc-800/60 ${isSelected ? 'bg-zinc-800/80' : style.row}`}
+                className={`cursor-pointer select-none border-b border-border transition-colors hover:bg-muted/50 ${isSelected ? 'bg-muted/70' : style.row}`}
             >
                 <td className="pl-3 pr-2 py-2 w-4">
                     <Circle className={`h-2 w-2 fill-current ${style.dot.replace('bg-', 'text-')}`} />
                 </td>
-                <td className="px-2 py-2 text-xs font-mono text-zinc-500 whitespace-nowrap">
+                <td className="px-2 py-2 text-xs font-mono text-muted-foreground whitespace-nowrap">
                     {formatTs(ev.ts)}
                 </td>
                 <td className="px-2 py-2">
@@ -118,43 +118,43 @@ function EventRow({ ev, selected, onSelect }) {
                         {ev.event}
                     </span>
                 </td>
-                <td className="px-2 py-2 text-xs font-mono text-zinc-400 max-w-[180px] truncate">
-                    {ev.channel ?? <span className="text-zinc-700">—</span>}
+                <td className="px-2 py-2 text-xs font-mono text-muted-foreground max-w-[180px] truncate">
+                    {ev.channel ?? <span className="text-muted-foreground/30">—</span>}
                 </td>
-                <td className="px-2 py-2 text-xs text-zinc-500 max-w-[240px] truncate font-mono">
+                <td className="px-2 py-2 text-xs text-muted-foreground/70 max-w-[240px] truncate font-mono">
                     {parsedData !== null ? (
                         typeof parsedData === 'object'
-                            ? <span className="text-zinc-600">{JSON.stringify(parsedData).slice(0, 80)}{JSON.stringify(parsedData).length > 80 ? '…' : ''}</span>
+                            ? <span className="text-muted-foreground/50">{JSON.stringify(parsedData).slice(0, 80)}{JSON.stringify(parsedData).length > 80 ? '…' : ''}</span>
                             : String(parsedData).slice(0, 80)
-                    ) : <span className="text-zinc-700">—</span>}
+                    ) : <span className="text-muted-foreground/25">—</span>}
                 </td>
                 <td className="pr-3 py-2 w-5">
                     {isSelected
-                        ? <ChevronDown className="h-3 w-3 text-zinc-500" />
-                        : <ChevronRight className="h-3 w-3 text-zinc-700" />}
+                        ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        : <ChevronRight className="h-3 w-3 text-muted-foreground/30" />}
                 </td>
             </tr>
             {isSelected && (
-                <tr className="border-b border-zinc-900 bg-zinc-900/60">
+                <tr className="border-b border-border bg-muted/30">
                     <td colSpan={6} className="px-4 py-3">
                         <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                             <div>
-                                <p className="text-zinc-600 uppercase tracking-widest text-[10px] mb-1">Event</p>
-                                <p className="text-white">{ev.event}</p>
+                                <p className="text-muted-foreground/50 uppercase tracking-widest text-[10px] mb-1">Event</p>
+                                <p className="text-foreground">{ev.event}</p>
                             </div>
                             <div>
-                                <p className="text-zinc-600 uppercase tracking-widest text-[10px] mb-1">Channel</p>
-                                <p className="text-zinc-300">{ev.channel ?? '—'}</p>
+                                <p className="text-muted-foreground/50 uppercase tracking-widest text-[10px] mb-1">Channel</p>
+                                <p className="text-foreground/80">{ev.channel ?? '—'}</p>
                             </div>
                             <div className="col-span-2">
-                                <p className="text-zinc-600 uppercase tracking-widest text-[10px] mb-1">Data</p>
-                                <div className="rounded-lg bg-zinc-950 border border-zinc-800 p-3 text-xs overflow-x-auto leading-relaxed">
+                                <p className="text-muted-foreground/50 uppercase tracking-widest text-[10px] mb-1">Data</p>
+                                <div className="rounded-lg bg-background border border-border p-3 text-xs overflow-x-auto leading-relaxed">
                                     <JsonTree value={parsedData} depth={0} />
                                 </div>
                             </div>
                             <div className="col-span-2">
-                                <p className="text-zinc-600 uppercase tracking-widest text-[10px] mb-1">Raw Frame</p>
-                                <div className="rounded-lg bg-zinc-950 border border-zinc-800 p-3 text-xs overflow-x-auto leading-relaxed">
+                                <p className="text-muted-foreground/50 uppercase tracking-widest text-[10px] mb-1">Raw Frame</p>
+                                <div className="rounded-lg bg-background border border-border p-3 text-xs overflow-x-auto leading-relaxed">
                                     <JsonTree value={ev.raw} depth={0} />
                                 </div>
                             </div>
@@ -356,13 +356,13 @@ export default function ApplicationMonitorPage() {
                 {/* Stats bar */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-shrink-0">
                     {[
-                        { label: 'Total Events', value: events.length, accent: 'text-white' },
-                        { label: 'Displayed', value: displayed.length, accent: 'text-zinc-300' },
-                        { label: 'Events / min', value: eventsPerMin, accent: 'text-emerald-400' },
-                        { label: 'Uptime', value: connected ? (uptime || '0s') : '—', accent: 'text-blue-400' },
+                        { label: 'Total Events', value: events.length, accent: 'text-foreground' },
+                        { label: 'Displayed', value: displayed.length, accent: 'text-muted-foreground' },
+                        { label: 'Events / min', value: eventsPerMin, accent: 'text-emerald-600 dark:text-emerald-400' },
+                        { label: 'Uptime', value: connected ? (uptime || '0s') : '—', accent: 'text-blue-600 dark:text-blue-400' },
                     ].map(({ label, value, accent }) => (
-                        <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3">
-                            <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest mb-0.5">{label}</p>
+                        <div key={label} className="rounded-xl border border-border bg-card px-4 py-3">
+                            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-0.5">{label}</p>
                             <p className={`text-2xl font-black font-mono tabular-nums ${accent}`}>{value}</p>
                         </div>
                     ))}
@@ -370,12 +370,12 @@ export default function ApplicationMonitorPage() {
 
                 {/* App info bar */}
                 {app && (
-                    <div className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 flex flex-wrap gap-x-6 gap-y-1.5 text-xs font-mono flex-shrink-0">
-                        <span className="text-zinc-600">ID: <span className="text-zinc-300">{app.id}</span></span>
-                        <span className="text-zinc-600">Key: <span className="text-zinc-300">{app.key}</span></span>
-                        <span className="text-zinc-600">Secret: <span className="text-zinc-500">{app.secret}</span></span>
-                        <span className="text-zinc-600">Status:{' '}
-                            <span className={app.enabled ? 'text-emerald-400' : 'text-red-400'}>
+                    <div className="rounded-xl border border-border bg-card px-4 py-2.5 flex flex-wrap gap-x-6 gap-y-1.5 text-xs font-mono flex-shrink-0">
+                        <span className="text-muted-foreground/60">ID: <span className="text-foreground/80">{app.id}</span></span>
+                        <span className="text-muted-foreground/60">Key: <span className="text-foreground/80">{app.key}</span></span>
+                        <span className="text-muted-foreground/60">Secret: <span className="text-muted-foreground">{app.secret}</span></span>
+                        <span className="text-muted-foreground/60">Status:{' '}
+                            <span className={app.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                                 {app.enabled ? 'enabled' : 'disabled'}
                             </span>
                         </span>
@@ -389,7 +389,7 @@ export default function ApplicationMonitorPage() {
                             placeholder="Filter by event or channel…"
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            className="pl-8 h-8 text-xs bg-zinc-950 border-zinc-800 text-zinc-200 placeholder:text-zinc-600"
+                            className="pl-8 h-8 text-xs"
                         />
                         <Activity className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600 pointer-events-none" />
                     </div>
@@ -398,8 +398,8 @@ export default function ApplicationMonitorPage() {
                         onClick={togglePause}
                         className={`flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border transition-all ${
                             paused
-                                ? 'bg-yellow-500/10 border-yellow-700/50 text-yellow-400 hover:bg-yellow-500/20'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+                                ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/20'
+                                : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
                         }`}
                     >
                         {paused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
@@ -408,7 +408,7 @@ export default function ApplicationMonitorPage() {
 
                     <button
                         onClick={clearEvents}
-                        className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-red-400 hover:border-red-900/50 transition-all"
+                        className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-red-600 dark:hover:text-red-400 hover:border-red-400/50 transition-all"
                     >
                         <Trash2 className="h-3 w-3" />
                         Clear
@@ -417,7 +417,7 @@ export default function ApplicationMonitorPage() {
                     <button
                         onClick={exportJson}
                         disabled={events.length === 0}
-                        className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-blue-400 hover:border-blue-900/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                         <Download className="h-3 w-3" />
                         Export
@@ -429,17 +429,17 @@ export default function ApplicationMonitorPage() {
                 </div>
 
                 {/* Event log table */}
-                <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden flex flex-col min-h-0">
+                <div className="flex-1 rounded-xl border border-border bg-card overflow-hidden flex flex-col min-h-0">
                     {/* Table header */}
-                    <div className="border-b border-zinc-800 bg-zinc-900/50">
+                    <div className="border-b border-border bg-muted/30">
                         <table className="w-full text-xs">
                             <thead>
                                 <tr>
                                     <th className="pl-3 pr-2 py-2 w-4"></th>
-                                    <th className="px-2 py-2 text-left font-semibold text-zinc-600 uppercase tracking-widest text-[10px] whitespace-nowrap w-44">Timestamp</th>
-                                    <th className="px-2 py-2 text-left font-semibold text-zinc-600 uppercase tracking-widest text-[10px]">Event</th>
-                                    <th className="px-2 py-2 text-left font-semibold text-zinc-600 uppercase tracking-widest text-[10px]">Channel</th>
-                                    <th className="px-2 py-2 text-left font-semibold text-zinc-600 uppercase tracking-widest text-[10px]">Data</th>
+                                    <th className="px-2 py-2 text-left font-semibold text-muted-foreground/60 uppercase tracking-widest text-[10px] whitespace-nowrap w-44">Timestamp</th>
+                                    <th className="px-2 py-2 text-left font-semibold text-muted-foreground/60 uppercase tracking-widest text-[10px]">Event</th>
+                                    <th className="px-2 py-2 text-left font-semibold text-muted-foreground/60 uppercase tracking-widest text-[10px]">Channel</th>
+                                    <th className="px-2 py-2 text-left font-semibold text-muted-foreground/60 uppercase tracking-widest text-[10px]">Data</th>
                                     <th className="pr-3 py-2 w-5"></th>
                                 </tr>
                             </thead>
@@ -450,8 +450,8 @@ export default function ApplicationMonitorPage() {
                     <div className="flex-1 overflow-y-auto">
                         {displayed.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 gap-3 select-none">
-                                <Activity className="h-8 w-8 text-zinc-800" />
-                                <p className="text-sm text-zinc-700">
+                                <Activity className="h-8 w-8 text-muted-foreground/20" />
+                                <p className="text-sm text-muted-foreground/50">
                                     {connected
                                         ? filter
                                             ? 'No events match your filter.'
@@ -476,8 +476,8 @@ export default function ApplicationMonitorPage() {
                     </div>
 
                     {/* Footer */}
-                    <div className="border-t border-zinc-900 px-3 py-1.5 flex items-center justify-between flex-shrink-0">
-                        <div className="flex items-center gap-4 text-[10px] text-zinc-700">
+                    <div className="border-t border-border px-3 py-1.5 flex items-center justify-between flex-shrink-0">
+                        <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
                             {Object.entries(CATEGORY_STYLE).filter(([k]) => k !== 'unknown').map(([cat, s]) => (
                                 <span key={cat} className="flex items-center gap-1">
                                     <Circle className={`h-1.5 w-1.5 fill-current ${s.dot.replace('bg-', 'text-')}`} />
@@ -485,7 +485,7 @@ export default function ApplicationMonitorPage() {
                                 </span>
                             ))}
                         </div>
-                        <span className="text-[10px] text-zinc-800 font-mono">max 500 events buffered</span>
+                        <span className="text-[10px] text-muted-foreground/25 font-mono">max 500 events buffered</span>
                     </div>
                 </div>
             </div>

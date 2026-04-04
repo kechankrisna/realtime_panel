@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/metrics', [MetricsController::class, 'index']);
 
     Route::get('/applications/stats', [ApplicationController::class, 'stats']);
+    Route::get('/applications/{application}/channels', [ApplicationController::class, 'channels']);
     Route::patch('/applications/{application}/toggle', [ApplicationController::class, 'toggle']);
     Route::apiResource('/applications', ApplicationController::class);
 

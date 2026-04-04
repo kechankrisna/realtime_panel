@@ -185,11 +185,13 @@ export default function ApplicationMonitorPage() {
     const [filter, setFilter] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [eventsPerMin, setEventsPerMin] = useState(0);
+    const [channelCount, setChannelCount] = useState(0);
 
     const pausedRef = useRef(false);
     const eventIdRef = useRef(0);
     const echoRef = useRef(null);
     const eventsRef = useRef([]); // mirror of events for rate calculation
+    const subscribedChannelsRef = useRef(new Set());
 
     const togglePause = () => {
         pausedRef.current = !pausedRef.current;
@@ -290,8 +292,37 @@ export default function ApplicationMonitorPage() {
             echo.disconnect();
             echoRef.current = null;
             setConnected(false);
+            subscribedChannelsRef.current = new Set();
+            setChannelCount(0);
         };
     }, [app?.key, patchSocket]);
+
+    // Subscribe to all active channels so Soketi delivers event frames to this connection.
+    // Without subscriptions the ws.onmessage patch never sees real event messages.
+    useEffect(() => {
+        if (!connected || !app?.id) return;
+
+        const fetchAndSubscribe = () => {
+            api.get(`/applications/${app.id}/channels`).then((r) => {
+                const names = r.data.channels ?? [];
+                const echo = echoRef.current;
+                if (!echo) return;
+                let added = 0;
+                names.forEach((name) => {
+                    if (!subscribedChannelsRef.current.has(name)) {
+                        subscribedChannelsRef.current.add(name);
+                        echo.channel(name); // silent subscribe
+                        added++;
+                    }
+                });
+                if (added > 0) setChannelCount(subscribedChannelsRef.current.size);
+            }).catch(() => {});
+        };
+
+        fetchAndSubscribe();
+        const iv = setInterval(fetchAndSubscribe, 10_000);
+        return () => clearInterval(iv);
+    }, [connected, app?.id]);
 
     // Filtered events
     const filterLower = filter.toLowerCase();
@@ -354,10 +385,11 @@ export default function ApplicationMonitorPage() {
                 </div>
 
                 {/* Stats bar */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-shrink-0">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 flex-shrink-0">
                     {[
                         { label: 'Total Events', value: events.length, accent: 'text-foreground' },
                         { label: 'Displayed', value: displayed.length, accent: 'text-muted-foreground' },
+                        { label: 'Channels', value: channelCount, accent: 'text-violet-600 dark:text-violet-400' },
                         { label: 'Events / min', value: eventsPerMin, accent: 'text-emerald-600 dark:text-emerald-400' },
                         { label: 'Uptime', value: connected ? (uptime || '0s') : '—', accent: 'text-blue-600 dark:text-blue-400' },
                     ].map(({ label, value, accent }) => (

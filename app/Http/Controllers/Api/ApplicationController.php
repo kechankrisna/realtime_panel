@@ -7,6 +7,7 @@ use App\Models\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Pusher\Pusher;
 
 class ApplicationController extends Controller
 {
@@ -97,6 +98,24 @@ class ApplicationController extends Controller
         $application->clearCache();
 
         return response()->json($application->fresh()->load(['creator:id,name', 'updater:id,name']));
+    }
+
+    public function channels(Application $application): JsonResponse
+    {
+        $this->authorizeOwnership($application);
+
+        $options = config('broadcasting.connections.pusher.options');
+
+        $pusher = new Pusher($application->key, $application->secret, $application->id, $options);
+
+        try {
+            $result = $pusher->get('/channels');
+            $channels = array_keys((array) ($result->channels ?? new \stdClass()));
+        } catch (\Throwable) {
+            $channels = [];
+        }
+
+        return response()->json(['channels' => $channels]);
     }
 
     public function destroy(Application $application): JsonResponse

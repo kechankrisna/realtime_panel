@@ -443,6 +443,7 @@ export default function ChessPage() {
         return (
             <AppLayout>
                 <div className="mx-auto max-w-4xl space-y-6">
+                    {/* Breadcrumb */}
                     <div className="flex items-center gap-2">
                         <Link
                             to="/galleries"
@@ -452,41 +453,57 @@ export default function ChessPage() {
                             Galleries
                         </Link>
                         <span className="text-muted-foreground/40">/</span>
-                        <h1 className="text-xl font-bold">Chess</h1>
+                        <h1 className="text-xl font-bold text-yellow-500">Chess</h1>
                     </div>
 
+                    {/* Casino hero banner */}
+                    <div className="relative overflow-hidden rounded-2xl border border-yellow-900/30 px-6 py-5"
+                        style={{ background: 'radial-gradient(ellipse at 30% 50%, #2a1a00 0%, #0d0900 80%)' }}>
+                        <div className="absolute inset-0 flex items-center justify-around pointer-events-none select-none opacity-[0.05] text-9xl text-yellow-300 font-serif">
+                            <span>♛</span><span>♜</span><span>♝</span><span>♞</span>
+                        </div>
+                        <p className="relative text-sm text-yellow-200/50 max-w-xl leading-relaxed">
+                            Classical chess — minimax AI or live multiplayer via Soketi.{' '}
+                            <span className="text-yellow-400/80 font-semibold">Drag pieces</span> to make your move. Resign anytime.
+                        </p>
+                    </div>
+
+                    {/* Mode cards */}
                     <div className="grid gap-4 md:grid-cols-3">
                         {/* VS Machine */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
-                                <Bot className="h-6 w-6 text-green-500" />
+                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10 border border-green-500/20">
+                                <Bot className="h-6 w-6 text-green-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">VS Machine</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Play against a minimax AI. No setup required — start instantly.
-                                </p>
+                                <h2 className="font-bold text-base text-white">VS Machine</h2>
+                                <p className="text-sm text-yellow-200/30 mt-1">Play against a minimax AI. No setup required — start instantly.</p>
                             </div>
-                            <Button className="mt-auto w-full" onClick={startVsMachine}>
-                                Play vs Machine
-                            </Button>
+                            <button
+                                onClick={startVsMachine}
+                                className="mt-auto w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500"
+                            >
+                                Play Now
+                            </button>
                         </div>
 
                         {/* Create Room */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
-                                <Crown className="h-6 w-6 text-blue-500" />
+                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                <Crown className="h-6 w-6 text-blue-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">Create Room</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Host a live match. Share the room code with your opponent.
-                                </p>
+                                <h2 className="font-bold text-base text-white">Create Room</h2>
+                                <p className="text-sm text-yellow-200/30 mt-1">Host a live match. Share the room code with your opponent.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Soketi Application</Label>
+                                <Label className="text-xs text-yellow-300/50">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger><SelectValue placeholder="Select an app…" /></SelectTrigger>
+                                    <SelectTrigger className="bg-black/30 border-yellow-900/30 text-yellow-100 text-sm">
+                                        <SelectValue placeholder="Select an app…" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         {apps.map((a) => (
                                             <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
@@ -494,31 +511,35 @@ export default function ChessPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button
-                                className="w-full"
+                            <button
+                                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500
+                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                                    flex items-center justify-center gap-2"
                                 disabled={!appId || registerRoom.isPending}
                                 onClick={createRoom}
                             >
-                                {registerRoom.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                                {registerRoom.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                 Create Room
-                            </Button>
+                            </button>
                         </div>
 
                         {/* Join Room */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10">
-                                <LogIn className="h-6 w-6 text-purple-500" />
+                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                <LogIn className="h-6 w-6 text-purple-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">Join Room</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Enter a code to join an open game waiting for a second player.
-                                </p>
+                                <h2 className="font-bold text-base text-white">Join Room</h2>
+                                <p className="text-sm text-yellow-200/30 mt-1">Enter a code to join an open game waiting for a second player.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Soketi Application</Label>
+                                <Label className="text-xs text-yellow-300/50">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger><SelectValue placeholder="Select an app…" /></SelectTrigger>
+                                    <SelectTrigger className="bg-black/30 border-yellow-900/30 text-yellow-100 text-sm">
+                                        <SelectValue placeholder="Select an app…" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         {apps.map((a) => (
                                             <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
@@ -527,24 +548,28 @@ export default function ChessPage() {
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Room Code</Label>
+                                <Label className="text-xs text-yellow-300/50">Room Code</Label>
                                 <Input
                                     placeholder="e.g. A3B2C1"
                                     value={roomInput}
                                     onChange={(e) => { setRoomInput(e.target.value.toUpperCase()); setJoinError(''); }}
                                     maxLength={10}
-                                    className="font-mono uppercase tracking-widest"
+                                    className="font-mono uppercase tracking-widest bg-black/30 border-yellow-900/30 text-yellow-100"
                                 />
-                                {joinError && <p className="text-xs text-destructive">{joinError}</p>}
+                                {joinError && <p className="text-xs text-red-400">{joinError}</p>}
                             </div>
-                            <Button
-                                className="w-full"
+                            <button
+                                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500
+                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                                    flex items-center justify-center gap-2"
                                 disabled={!appId || !roomInput.trim() || claimRoom.isPending}
                                 onClick={joinRoom}
                             >
-                                {claimRoom.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                                {claimRoom.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                 Join Game
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -573,34 +598,41 @@ export default function ChessPage() {
                             Back
                         </button>
                         <span className="text-muted-foreground/40">/</span>
-                        <span className="text-xl font-bold">Chess — Lobby</span>
+                        <span className="text-xl font-bold text-yellow-500">Chess — Lobby</span>
                     </div>
 
-                    <div className="rounded-xl border bg-card p-8 flex flex-col items-center gap-6 text-center">
-                        <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Room Code</p>
-                            <div className="flex items-center gap-2">
-                                <span className="font-mono text-4xl font-bold tracking-widest">{roomCode}</span>
-                                <Button variant="ghost" size="icon" onClick={copyCode} title="Copy room code">
-                                    {copied
-                                        ? <Check className="h-4 w-4 text-green-500" />
-                                        : <Copy className="h-4 w-4" />}
-                                </Button>
+                    <div className="rounded-2xl border border-yellow-900/40 overflow-hidden"
+                        style={{ background: 'radial-gradient(ellipse at center, #2a1a00 0%, #090600 90%)' }}>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/60 to-yellow-700/0" />
+                        <div className="p-8 flex flex-col items-center gap-6 text-center">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-semibold text-yellow-600/60 uppercase tracking-[0.3em]">Room Code</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono text-4xl font-black tracking-widest text-yellow-300">{roomCode}</span>
+                                    <button
+                                        onClick={copyCode}
+                                        className="p-1.5 rounded-lg bg-black/40 border border-yellow-600/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/40 transition-all"
+                                        title="Copy room code"
+                                    >
+                                        {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
+
+                            <div className="flex items-center gap-2 text-sm text-yellow-600/50">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Waiting for opponent…
+                            </div>
+
+                            <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
+                                {connected ? 'Connected to Soketi' : 'Connecting…'}
+                            </Badge>
+
+                            <p className="text-xs text-yellow-600/40">
+                                You are playing as <strong className="text-yellow-300/70">White ♙</strong>. Share the code above with your opponent.
+                            </p>
                         </div>
-
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Waiting for opponent…
-                        </div>
-
-                        <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
-                            {connected ? 'Connected to Soketi' : 'Connecting…'}
-                        </Badge>
-
-                        <p className="text-xs text-muted-foreground">
-                            You are playing as <strong>White</strong>. Share the code above with your opponent.
-                        </p>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/60 to-yellow-700/0" />
                     </div>
                 </div>
             </AppLayout>
@@ -615,20 +647,18 @@ export default function ChessPage() {
             <div className="mx-auto max-w-5xl space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-sm">
                         <Link
                             to="/galleries"
-                            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <ChevronLeft className="h-4 w-4" />
                             Galleries
                         </Link>
                         <span className="text-muted-foreground/40">/</span>
-                        <span className="text-sm text-muted-foreground">Chess</span>
-                        <span className="text-muted-foreground/40">/</span>
-                        <span className="text-sm font-medium">
-                            {mode === 'machine' ? 'VS Machine' : 'VS Player'}
-                        </span>
+                        <span className="font-semibold text-yellow-500">Chess</span>
+                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-muted-foreground">{mode === 'machine' ? 'VS Machine' : 'VS Player'}</span>
                     </div>
                     {mode === 'player' && (
                         <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
@@ -638,89 +668,112 @@ export default function ChessPage() {
                 </div>
 
                 {/* Board + Info */}
-                <div className="grid gap-6 md:grid-cols-[1fr_280px]">
-                    {/* Board */}
+                <div className="grid gap-5 md:grid-cols-[1fr_272px]">
+                    {/* Board — casino dark wood frame */}
                     <div ref={containerRef} className="flex items-start justify-center">
-                        <Chessboard
-                            boardWidth={boardSize}
-                            position={game.fen()}
-                            onPieceDrop={onDrop}
-                            isDraggablePiece={isDraggablePiece}
-                            boardOrientation={mode === 'player' && playerColor === 'b' ? 'black' : 'white'}
-                        />
+                        <div className="rounded-xl overflow-hidden"
+                            style={{
+                                padding: 10,
+                                background: 'linear-gradient(145deg, #3b2300 0%, #1e1200 50%, #2e1a00 100%)',
+                                boxShadow: '0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(202,163,90,0.25), inset 0 1px 0 rgba(255,220,100,0.1)',
+                            }}
+                        >
+                            <Chessboard
+                                boardWidth={boardSize}
+                                position={game.fen()}
+                                onPieceDrop={onDrop}
+                                isDraggablePiece={isDraggablePiece}
+                                boardOrientation={mode === 'player' && playerColor === 'b' ? 'black' : 'white'}
+                                customBoardStyle={{
+                                    borderRadius: 4,
+                                    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
+                                }}
+                                customDarkSquareStyle={{ backgroundColor: '#b58863' }}
+                                customLightSquareStyle={{ backgroundColor: '#f0d9b5' }}
+                                customDropSquareStyle={{ boxShadow: 'inset 0 0 1px 4px rgba(202,163,90,0.8)' }}
+                            />
+                        </div>
                     </div>
 
                     {/* Info panel */}
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3">
                         {/* Status card */}
-                        <div className="rounded-lg border bg-card p-4 space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Badge variant="secondary" className="text-xs">
-                                    {mode === 'machine'
-                                        ? 'VS Machine'
-                                        : `VS Player · You are ${playerColor === 'w' ? 'White' : 'Black'}`}
-                                </Badge>
-                                {mode === 'player' && roomCode && (
-                                    <Badge variant="outline" className="font-mono text-xs">{roomCode}</Badge>
+                        <div className="rounded-2xl border border-yellow-900/30 overflow-hidden"
+                            style={{ background: 'linear-gradient(160deg, #1c1100 0%, #0a0800 100%)' }}>
+                            <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/40 to-yellow-700/0" />
+                            <div className="p-4 space-y-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[10px] font-bold text-yellow-600/50 uppercase tracking-widest">
+                                        {mode === 'machine' ? 'VS Machine' : `VS Player · ${playerColor === 'w' ? 'White ♙' : 'Black ♟'}`}
+                                    </span>
+                                    {mode === 'player' && roomCode && (
+                                        <span className="font-mono text-[10px] text-yellow-700/60 border border-yellow-900/30 rounded px-1.5 py-0.5">{roomCode}</span>
+                                    )}
+                                </div>
+                                <p className={`text-sm font-semibold leading-snug ${isGameOver ? 'text-yellow-400' : 'text-yellow-100/90'}`}>
+                                    {status}
+                                </p>
+                                {thinking && (
+                                    <p className="flex items-center gap-1.5 text-xs text-yellow-600/50">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        AI is thinking…
+                                    </p>
+                                )}
+                                {mode === 'player' && !opponentJoined && (
+                                    <p className="flex items-center gap-1.5 text-xs text-yellow-600/50">
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Waiting for opponent…
+                                    </p>
                                 )}
                             </div>
-                            <p className={`text-sm font-medium ${isGameOver ? 'text-primary' : ''}`}>
-                                {status}
-                            </p>
-                            {thinking && (
-                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    AI is thinking…
-                                </p>
-                            )}
-                            {mode === 'player' && !opponentJoined && (
-                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                    Waiting for opponent…
-                                </p>
-                            )}
                         </div>
 
                         {/* Move history */}
-                        <div className="rounded-lg border bg-card flex-1 overflow-hidden">
-                            <div className="px-3 py-2 border-b text-xs font-medium text-muted-foreground">
-                                Move History
+                        <div className="rounded-2xl border border-yellow-900/30 flex-1 overflow-hidden flex flex-col"
+                            style={{ background: 'linear-gradient(160deg, #141005 0%, #080600 100%)' }}>
+                            <div className="px-4 py-2.5 border-b border-yellow-900/20 flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-yellow-600/50 uppercase tracking-[0.2em]">Move History</span>
                             </div>
-                            <div className="h-52 overflow-y-auto p-2 space-y-0.5">
+                            <div className="h-52 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
                                 {movePairs.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground text-center pt-6">
-                                        No moves yet
-                                    </p>
+                                    <p className="text-xs text-yellow-900/60 text-center pt-6 select-none">No moves yet</p>
                                 ) : (
                                     movePairs.map(({ num, w, b }) => (
                                         <div
                                             key={num}
-                                            className="grid grid-cols-[2rem_1fr_1fr] gap-1 text-xs px-1 py-0.5 rounded hover:bg-muted/50"
+                                            className="grid grid-cols-[2rem_1fr_1fr] gap-1 text-xs px-2 py-1 rounded-lg hover:bg-yellow-900/10 transition-colors"
                                         >
-                                            <span className="text-muted-foreground">{num}.</span>
-                                            <span>{w}</span>
-                                            <span className="text-muted-foreground">{b}</span>
+                                            <span className="text-yellow-800/60 font-medium">{num}.</span>
+                                            <span className="text-yellow-100/80 font-mono">{w}</span>
+                                            <span className="text-yellow-200/40 font-mono">{b}</span>
                                         </div>
                                     ))
                                 )}
                             </div>
                         </div>
 
-                        {/* Actions */}
+                        {/* Action buttons */}
                         <div className="flex gap-2">
-                            <Button variant="outline" className="flex-1" onClick={newGame}>
-                                <RotateCcw className="h-4 w-4 mr-2" />
-                                New Game
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="flex-1"
-                                disabled={isGameOver}
-                                onClick={resign}
+                            <button
+                                onClick={newGame}
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95
+                                    bg-transparent border border-yellow-900/40 text-yellow-500/70
+                                    hover:bg-yellow-900/20 hover:border-yellow-700/50 hover:text-yellow-400"
                             >
-                                <Flag className="h-4 w-4 mr-2" />
+                                <RotateCcw className="h-4 w-4" />
+                                New Game
+                            </button>
+                            <button
+                                onClick={resign}
+                                disabled={isGameOver}
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95
+                                    bg-transparent border border-red-900/40 text-red-500/60
+                                    hover:bg-red-900/20 hover:border-red-700/50 hover:text-red-400
+                                    disabled:opacity-25 disabled:cursor-not-allowed"
+                            >
+                                <Flag className="h-4 w-4" />
                                 Resign
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>

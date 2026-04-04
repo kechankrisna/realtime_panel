@@ -217,33 +217,43 @@ function seatPosition(seatIndex, mySeat) {
 }
 
 // ---------------------------------------------------------------------------
-// Card rendering
+// Card rendering helpers
 // ---------------------------------------------------------------------------
 
+function cardRotationDeg(cardId) {
+    let h = 0;
+    for (let i = 0; i < cardId.length; i++) h = (h * 31 + cardId.charCodeAt(i)) & 0xffff;
+    return ((h % 60) - 30) / 10; // -3 to +3 degrees, deterministic per card
+}
+
 function CardFace({ card, selected, onClick, disabled }) {
+    const isRed = card.suit === 'D' || card.suit === 'H';
+    const clr = isRed ? 'text-red-600' : 'text-slate-900';
     return (
         <button
             onClick={onClick}
             disabled={disabled}
             className={[
-                'relative flex flex-col items-center justify-between rounded-lg border-2 select-none transition-all',
-                'w-14 h-20 text-sm font-bold px-1 py-0.5',
-                'bg-white dark:bg-zinc-900',
+                'relative flex flex-col justify-between rounded-xl select-none transition-all duration-150',
+                'w-16 h-24 px-1.5 py-1.5 bg-white shadow-md',
                 selected
-                    ? 'border-yellow-400 -translate-y-3 shadow-lg shadow-yellow-400/30'
-                    : 'border-border hover:border-primary/50 hover:-translate-y-1',
-                disabled ? 'opacity-50 cursor-default' : 'cursor-pointer',
+                    ? '-translate-y-5 shadow-2xl ring-2 ring-yellow-400 border border-yellow-400 shadow-yellow-400/40'
+                    : disabled
+                        ? 'opacity-60 cursor-default border border-gray-200'
+                        : 'cursor-pointer border border-gray-200 hover:-translate-y-2 hover:shadow-xl hover:border-yellow-300',
             ].join(' ')}
         >
-            <span className={`self-start text-xs ${SUIT_COLOR[card.suit]}`}>
-                {card.rank}
-            </span>
-            <span className={`text-xl leading-none ${SUIT_COLOR[card.suit]}`}>
-                {SUIT_LABEL[card.suit]}
-            </span>
-            <span className={`self-end text-xs rotate-180 ${SUIT_COLOR[card.suit]}`}>
-                {card.rank}
-            </span>
+            <div className={`flex flex-col items-start leading-none ${clr}`}>
+                <span className="text-[11px] font-black leading-tight">{card.rank}</span>
+                <span className="text-[11px] leading-tight">{SUIT_LABEL[card.suit]}</span>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className={`text-3xl opacity-10 select-none ${clr}`}>{SUIT_LABEL[card.suit]}</span>
+            </div>
+            <div className={`flex flex-col items-end leading-none rotate-180 ${clr}`}>
+                <span className="text-[11px] font-black leading-tight">{card.rank}</span>
+                <span className="text-[11px] leading-tight">{SUIT_LABEL[card.suit]}</span>
+            </div>
         </button>
     );
 }
@@ -251,41 +261,87 @@ function CardFace({ card, selected, onClick, disabled }) {
 function CardBack({ tiny = false }) {
     return (
         <div className={[
-            'rounded-lg border-2 border-border bg-gradient-to-br from-blue-600 to-blue-900',
-            tiny ? 'w-8 h-12' : 'w-14 h-20',
-        ].join(' ')} />
+            'rounded-lg border border-red-900/60 bg-gradient-to-br from-red-700 to-red-950',
+            'ring-1 ring-inset ring-yellow-600/20 flex items-center justify-center shadow-md overflow-hidden',
+            tiny ? 'w-8 h-12' : 'w-16 h-24',
+        ].join(' ')}>
+            <div className={`grid grid-cols-3 gap-0.5 opacity-20 text-yellow-300 select-none leading-none ${tiny ? 'text-[5px]' : 'text-[8px]'}`}>
+                {['♦','♣','♠','♥','♦','♣','♠','♥','♦'].map((s, i) => (
+                    <span key={i} className="text-center">{s}</span>
+                ))}
+            </div>
+        </div>
     );
 }
 
 function TablePile({ play }) {
     if (!play || !play.cards.length) {
         return (
-            <div className="flex items-center justify-center rounded-xl border-2 border-dashed border-border w-40 h-28 text-xs text-muted-foreground">
-                Table empty
+            <div className="flex items-center justify-center w-48 h-32 rounded-[40%] border-2 border-dashed border-emerald-500/25 bg-emerald-800/10">
+                <div className="text-center space-y-1 select-none">
+                    <div className="text-emerald-500/20 text-lg leading-none tracking-wider">♠ ♣ ♦ ♥</div>
+                    <div className="text-[10px] text-emerald-500/30 uppercase tracking-[0.2em]">Table</div>
+                </div>
             </div>
         );
     }
     return (
-        <div className="flex flex-wrap gap-1 justify-center items-end min-h-[5rem]">
+        <div className="flex flex-wrap gap-1 justify-center items-end min-h-[8rem] min-w-[12rem] max-w-[22rem] rounded-3xl p-3 bg-emerald-800/20 border border-emerald-600/20">
             {play.cards.map((c) => (
-                <CardFace key={c.id} card={c} selected={false} disabled={true} />
+                <div key={c.id} style={{ transform: `rotate(${cardRotationDeg(c.id)}deg)` }}>
+                    <CardFace card={c} selected={false} disabled={true} />
+                </div>
             ))}
         </div>
     );
 }
 
-function OpponentHand({ count, label, position }) {
-    const isHorizontal = position === 'top';
-    const isVertical   = position === 'left' || position === 'right';
+function OpponentHand({ count, label, position, isActive }) {
+    const isVert = position === 'left' || position === 'right';
+    const visible = Math.min(count, 10);
+    const extra = Math.max(0, count - 10);
+    const OVERLAP = 11;
+    const CARD_W = 32;
+    const fanWidth = visible > 0 ? (visible - 1) * OVERLAP + CARD_W : CARD_W;
     return (
-        <div className={`flex flex-col items-center gap-1 ${isVertical ? 'rotate-90' : ''}`}>
-            <span className="text-xs text-muted-foreground font-medium">{label} ({count})</span>
-            <div className="flex gap-0.5">
-                {Array.from({ length: Math.min(count, 8) }).map((_, i) => (
-                    <CardBack key={i} tiny />
-                ))}
-                {count > 8 && <span className="text-xs text-muted-foreground self-center ml-1">+{count - 8}</span>}
+        <div className={`flex flex-col items-center gap-2 ${isVert ? 'rotate-90' : ''}`}>
+            <div className={`rounded-full px-3 py-0.5 border flex items-center gap-1.5 transition-all ${
+                isActive
+                    ? 'bg-yellow-400/10 border-yellow-400/50 shadow-sm shadow-yellow-400/20'
+                    : 'bg-black/40 border-yellow-600/15'
+            }`}>
+                <span className={`text-xs font-semibold ${isActive ? 'text-yellow-300' : 'text-emerald-200/80'}`}>{label}</span>
+                {count > 0 && <span className={`text-xs ${isActive ? 'text-yellow-400/80' : 'text-emerald-500/60'}`}>({count})</span>}
             </div>
+            {count > 0 ? (
+                <div className="relative" style={{ width: fanWidth, height: 48 }}>
+                    {Array.from({ length: visible }).map((_, i) => {
+                        const mid = (visible - 1) / 2;
+                        const angle = ((i - mid) * 3).toFixed(1);
+                        const yOff = Math.abs(i - mid) * 1.5;
+                        return (
+                            <div
+                                key={i}
+                                style={{
+                                    position: 'absolute',
+                                    left: i * OVERLAP,
+                                    top: yOff,
+                                    zIndex: i,
+                                    transform: `rotate(${angle}deg)`,
+                                    transformOrigin: 'bottom center',
+                                }}
+                            >
+                                <CardBack tiny />
+                            </div>
+                        );
+                    })}
+                    {extra > 0 && (
+                        <span className="absolute -right-7 top-1 text-xs text-emerald-400/70 font-medium">+{extra}</span>
+                    )}
+                </div>
+            ) : (
+                <span className="text-xs text-emerald-500/40 italic px-2">finished</span>
+            )}
         </div>
     );
 }
@@ -747,51 +803,64 @@ export default function TienLenPage() {
         return (
             <AppLayout>
                 <div className="mx-auto max-w-4xl space-y-6">
+                    {/* Breadcrumb */}
                     <div className="flex items-center gap-2">
                         <Link to="/galleries" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
                             <ChevronLeft className="h-4 w-4" />
                             Galleries
                         </Link>
                         <span className="text-muted-foreground/40">/</span>
-                        <h1 className="text-xl font-bold">Tiến Lên</h1>
+                        <h1 className="text-xl font-bold text-yellow-500">Tiến Lên</h1>
                     </div>
 
-                    <p className="text-sm text-muted-foreground max-w-lg">
-                        Vietnamese card game. 4 players, 13 cards each. Play singles, pairs, sequences, or combos to empty your hand first. 2 is the highest card — but can be chopped by quads or a 3-pair run.
-                    </p>
+                    {/* Casino hero banner */}
+                    <div className="relative overflow-hidden rounded-2xl border border-emerald-800/40 px-6 py-5"
+                        style={{ background: 'radial-gradient(ellipse at 30% 50%, #1a5c3a 0%, #082218 80%)' }}>
+                        <div className="absolute inset-0 flex items-center justify-around pointer-events-none select-none opacity-[0.04] text-9xl text-yellow-300 font-serif">
+                            <span>♠</span><span>♣</span><span>♦</span><span>♥</span>
+                        </div>
+                        <p className="relative text-sm text-emerald-200/70 max-w-xl leading-relaxed">
+                            Vietnamese card game — 4 players, 13 cards each. Play singles, pairs, sequences, or combos to empty your hand first.{' '}
+                            <span className="text-yellow-400/90 font-semibold">2 is the highest card</span>, but can be chopped by quads or a 3-pair run.
+                        </p>
+                    </div>
 
+                    {/* Mode cards */}
                     <div className="grid gap-4 md:grid-cols-3">
                         {/* VS Bots */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10">
-                                <Bot className="h-6 w-6 text-green-500" />
+                        <div className="rounded-2xl border border-emerald-800/30 bg-gradient-to-b from-emerald-950/80 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-emerald-600/50 hover:shadow-lg hover:shadow-emerald-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                <Bot className="h-6 w-6 text-emerald-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">Play vs Bots</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    You vs 3 bots. No setup needed — start instantly.
-                                </p>
+                                <h2 className="font-bold text-base text-white">Play vs Bots</h2>
+                                <p className="text-sm text-emerald-300/50 mt-1">You vs 3 bots. No setup needed — start instantly.</p>
                             </div>
-                            <Button className="mt-auto w-full" onClick={startVsBots}>
-                                Play vs Bots
-                            </Button>
+                            <button
+                                onClick={startVsBots}
+                                className="mt-auto w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500"
+                            >
+                                Play Now
+                            </button>
                         </div>
 
                         {/* Create Room */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
-                                <Users className="h-6 w-6 text-blue-500" />
+                        <div className="rounded-2xl border border-emerald-800/30 bg-gradient-to-b from-emerald-950/80 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-emerald-600/50 hover:shadow-lg hover:shadow-emerald-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                <Users className="h-6 w-6 text-blue-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">Create Room</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Host a 4-player room. Share the code with friends.
-                                </p>
+                                <h2 className="font-bold text-base text-white">Create Room</h2>
+                                <p className="text-sm text-emerald-300/50 mt-1">Host a 4-player room. Share the code with friends.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Soketi Application</Label>
+                                <Label className="text-xs text-emerald-300/60">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger><SelectValue placeholder="Select an app…" /></SelectTrigger>
+                                    <SelectTrigger className="bg-black/30 border-emerald-700/30 text-emerald-100 text-sm">
+                                        <SelectValue placeholder="Select an app…" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         {apps.map((a) => (
                                             <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
@@ -799,27 +868,35 @@ export default function TienLenPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button className="w-full" disabled={!appId || registerRoom.isPending} onClick={createRoom}>
-                                {registerRoom.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                            <button
+                                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500
+                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                                    flex items-center justify-center gap-2"
+                                disabled={!appId || registerRoom.isPending}
+                                onClick={createRoom}
+                            >
+                                {registerRoom.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                 Create Room
-                            </Button>
+                            </button>
                         </div>
 
                         {/* Join Room */}
-                        <div className="rounded-xl border bg-card p-6 flex flex-col gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10">
-                                <LogIn className="h-6 w-6 text-purple-500" />
+                        <div className="rounded-2xl border border-emerald-800/30 bg-gradient-to-b from-emerald-950/80 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-emerald-600/50 hover:shadow-lg hover:shadow-emerald-950/30">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                <LogIn className="h-6 w-6 text-purple-400" />
                             </div>
                             <div>
-                                <h2 className="font-semibold text-base">Join Room</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    Enter a code to join an open room (max 4 players).
-                                </p>
+                                <h2 className="font-bold text-base text-white">Join Room</h2>
+                                <p className="text-sm text-emerald-300/50 mt-1">Enter a code to join an open room (max 4 players).</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Soketi Application</Label>
+                                <Label className="text-xs text-emerald-300/60">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger><SelectValue placeholder="Select an app…" /></SelectTrigger>
+                                    <SelectTrigger className="bg-black/30 border-emerald-700/30 text-emerald-100 text-sm">
+                                        <SelectValue placeholder="Select an app…" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         {apps.map((a) => (
                                             <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
@@ -828,24 +905,28 @@ export default function TienLenPage() {
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs">Room Code</Label>
+                                <Label className="text-xs text-emerald-300/60">Room Code</Label>
                                 <Input
                                     placeholder="e.g. A3B2C1"
                                     value={roomInput}
                                     onChange={(e) => { setRoomInput(e.target.value.toUpperCase()); setJoinError(''); }}
                                     maxLength={10}
-                                    className="font-mono uppercase tracking-widest"
+                                    className="font-mono uppercase tracking-widest bg-black/30 border-emerald-700/30 text-emerald-100"
                                 />
-                                {joinError && <p className="text-xs text-destructive">{joinError}</p>}
+                                {joinError && <p className="text-xs text-red-400">{joinError}</p>}
                             </div>
-                            <Button
-                                className="w-full"
+                            <button
+                                className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-md shadow-yellow-600/20 hover:from-yellow-300 hover:to-yellow-500
+                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                                    flex items-center justify-center gap-2"
                                 disabled={!appId || !roomInput.trim() || claimRoom.isPending}
                                 onClick={joinRoom}
                             >
-                                {claimRoom.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                                {claimRoom.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                 Join Game
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -874,45 +955,54 @@ export default function TienLenPage() {
                             Back
                         </button>
                         <span className="text-muted-foreground/40">/</span>
-                        <span className="text-xl font-bold">Tiến Lên — Lobby</span>
+                        <span className="text-xl font-bold text-yellow-500">Tiến Lên — Lobby</span>
                     </div>
 
-                    <div className="rounded-xl border bg-card p-8 flex flex-col items-center gap-6 text-center">
-                        <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Room Code</p>
-                            <div className="flex items-center gap-2">
-                                <span className="font-mono text-4xl font-bold tracking-widest">{roomCode}</span>
-                                <Button variant="ghost" size="icon" onClick={copyCode} title="Copy code">
-                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Seat indicators */}
-                        <div className="flex gap-3">
-                            {[0, 1, 2, 3].map((s) => (
-                                <div key={s} className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
-                                    s < seats
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'border-border text-muted-foreground'
-                                }`}>
-                                    {s < seats ? (playerNames[s] || `P${s+1}`).charAt(0).toUpperCase() : '?'}
+                    <div className="rounded-2xl border border-emerald-800/40 overflow-hidden"
+                        style={{ background: 'radial-gradient(ellipse at center, #1a5c3a 0%, #082218 90%)' }}>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/60 to-yellow-700/0" />
+                        <div className="p-8 flex flex-col items-center gap-6 text-center">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-semibold text-emerald-400/60 uppercase tracking-[0.3em]">Room Code</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono text-4xl font-black tracking-widest text-yellow-300">{roomCode}</span>
+                                    <button
+                                        onClick={copyCode}
+                                        className="p-1.5 rounded-lg bg-black/30 border border-yellow-600/20 text-yellow-500/70 hover:text-yellow-400 hover:border-yellow-500/40 transition-all"
+                                        title="Copy code"
+                                    >
+                                        {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                                    </button>
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* Seat indicators */}
+                            <div className="flex gap-3">
+                                {[0, 1, 2, 3].map((s) => (
+                                    <div key={s} className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                                        s < seats
+                                            ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300 shadow-md shadow-yellow-500/20'
+                                            : 'border-emerald-800/50 text-emerald-700'
+                                    }`}>
+                                        {s < seats ? (playerNames[s] || `P${s + 1}`).charAt(0).toUpperCase() : '?'}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm text-emerald-400/60">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                {seats}/4 players joined…
+                            </div>
+
+                            <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
+                                {connected ? 'Connected to Soketi' : 'Connecting…'}
+                            </Badge>
+
+                            <p className="text-xs text-emerald-400/50">
+                                You are <strong className="text-emerald-300/80">Seat {mySeat + 1}</strong>. Game starts automatically when all 4 seats are filled.
+                            </p>
                         </div>
-
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            {seats}/4 players joined…
-                        </div>
-
-                        <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
-                            {connected ? 'Connected to Soketi' : 'Connecting…'}
-                        </Badge>
-
-                        <p className="text-xs text-muted-foreground">
-                            You are <strong>Seat {mySeat + 1}</strong>. Game starts automatically when all 4 seats are filled.
-                        </p>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/60 to-yellow-700/0" />
                     </div>
                 </div>
             </AppLayout>
@@ -933,13 +1023,15 @@ export default function TienLenPage() {
             <div className="mx-auto max-w-3xl space-y-4">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Link to="/galleries" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <div className="flex items-center gap-2 text-sm">
+                        <Link to="/galleries" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
                             <ChevronLeft className="h-4 w-4" />
                             Galleries
                         </Link>
                         <span className="text-muted-foreground/40">/</span>
-                        <span className="text-sm font-medium">Tiến Lên — {isVsBot ? 'VS Bots' : `Room ${roomCode}`}</span>
+                        <span className="font-semibold text-yellow-500">Tiến Lên</span>
+                        <span className="text-muted-foreground/40">—</span>
+                        <span className="text-sm text-muted-foreground">{isVsBot ? 'VS Bots' : `Room ${roomCode}`}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {!isVsBot && (
@@ -954,92 +1046,111 @@ export default function TienLenPage() {
                     </div>
                 </div>
 
-                {/* Game area */}
-                <div className="rounded-xl border bg-card overflow-hidden">
-                    {/* Top opponent */}
-                    <div className="flex justify-center pt-4 pb-2">
-                        {(() => {
-                            const s = (mySeat + 2) % 4;
-                            return (
-                                <div className={`flex flex-col items-center gap-1 ${turn === s && !isGameOver ? 'ring-2 ring-primary rounded-lg p-1' : ''}`}>
-                                    <OpponentHand
-                                        count={hands[s].length}
-                                        label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} 🏆 #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
-                                        position="top"
-                                    />
-                                </div>
-                            );
-                        })()}
-                    </div>
+                {/* Casino table */}
+                <div className="rounded-2xl overflow-hidden border border-emerald-900/60 shadow-2xl" style={{ background: '#071a10' }}>
+                    {/* Top gold accent stripe */}
+                    <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/40 to-yellow-700/0" />
 
-                    {/* Middle row: left | table | right */}
-                    <div className="grid grid-cols-[160px_1fr_160px] items-center gap-2 px-2 py-2">
-                        {/* Left opponent */}
-                        {(() => {
-                            const s = (mySeat + 3) % 4;
-                            return (
-                                <div className={`flex justify-center ${turn === s && !isGameOver ? 'ring-2 ring-primary rounded-lg p-1' : ''}`}>
-                                    <OpponentHand
-                                        count={hands[s].length}
-                                        label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} 🏆 #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
-                                        position="left"
-                                    />
-                                </div>
-                            );
-                        })()}
+                    {/* Felt playing area */}
+                    <div className="px-4 py-5"
+                        style={{ background: 'radial-gradient(ellipse 80% 90% at 50% 40%, #1b6b3a 0%, #0e4224 45%, #06200f 100%)' }}>
 
-                        {/* Table center */}
-                        <div className="flex flex-col items-center gap-3">
-                            {/* Last action log */}
-                            {lastPlay && (
-                                <p className="text-xs text-muted-foreground text-center min-h-[1rem]">
-                                    {lastPlay.play
-                                        ? `${seatLabel(lastPlay.seat, mySeat, playerNames)} played ${lastPlay.play.type} (${lastPlay.play.cards.map((c) => c.rank + SUIT_LABEL[c.suit]).join(' ')})`
-                                        : `${seatLabel(lastPlay.seat, mySeat, playerNames)} passed`}
-                                </p>
-                            )}
-                            <TablePile play={table} />
-                            {/* Turn indicator */}
-                            <p className={`text-xs font-medium ${isGameOver ? 'text-green-500' : 'text-primary'}`}>
-                                {isGameOver
-                                    ? `Game over! Winner: ${seatLabel(winners[0], mySeat, playerNames)}`
-                                    : turn === mySeat
-                                        ? '🟢 Your turn'
-                                        : `⏳ ${seatLabel(turn, mySeat, playerNames)}'s turn`}
-                            </p>
+                        {/* Top opponent */}
+                        <div className="flex justify-center mb-3">
+                            {(() => {
+                                const s = (mySeat + 2) % 4;
+                                const active = turn === s && !isGameOver;
+                                return (
+                                    <div className={`rounded-2xl px-3 py-2 transition-all duration-300 ${active ? 'ring-1 ring-yellow-400/60 bg-yellow-400/5' : ''}`}>
+                                        <OpponentHand
+                                            count={hands[s].length}
+                                            label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
+                                            position="top"
+                                            isActive={active}
+                                        />
+                                    </div>
+                                );
+                            })()}
                         </div>
 
-                        {/* Right opponent */}
-                        {(() => {
-                            const s = (mySeat + 1) % 4;
-                            return (
-                                <div className={`flex justify-center ${turn === s && !isGameOver ? 'ring-2 ring-primary rounded-lg p-1' : ''}`}>
-                                    <OpponentHand
-                                        count={hands[s].length}
-                                        label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} 🏆 #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
-                                        position="right"
-                                    />
-                                </div>
-                            );
-                        })()}
+                        {/* Middle: left | center | right */}
+                        <div className="grid grid-cols-[150px_1fr_150px] items-center gap-2">
+                            {/* Left opponent */}
+                            {(() => {
+                                const s = (mySeat + 3) % 4;
+                                const active = turn === s && !isGameOver;
+                                return (
+                                    <div className={`flex justify-center rounded-2xl px-2 py-2 transition-all duration-300 ${active ? 'ring-1 ring-yellow-400/60 bg-yellow-400/5' : ''}`}>
+                                        <OpponentHand
+                                            count={hands[s].length}
+                                            label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
+                                            position="left"
+                                            isActive={active}
+                                        />
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Center table */}
+                            <div className="flex flex-col items-center gap-2">
+                                {lastPlay && (
+                                    <p className="text-[10px] text-emerald-300/50 text-center h-4 truncate max-w-[180px]">
+                                        {lastPlay.play
+                                            ? `${seatLabel(lastPlay.seat, mySeat, playerNames)}: ${lastPlay.play.cards.map((c) => c.rank + SUIT_LABEL[c.suit]).join(' ')}`
+                                            : `${seatLabel(lastPlay.seat, mySeat, playerNames)} passed`}
+                                    </p>
+                                )}
+                                <TablePile play={table} />
+                                <p className={`text-[11px] font-bold tracking-widest uppercase mt-1 transition-colors duration-300 ${
+                                    isGameOver
+                                        ? 'text-yellow-400'
+                                        : turn === mySeat
+                                            ? 'text-green-400'
+                                            : 'text-emerald-500/60'
+                                }`}>
+                                    {isGameOver
+                                        ? `🏆 ${seatLabel(winners[0], mySeat, playerNames)} wins`
+                                        : turn === mySeat
+                                            ? '● Your turn'
+                                            : `⏳ ${seatLabel(turn, mySeat, playerNames)}`}
+                                </p>
+                            </div>
+
+                            {/* Right opponent */}
+                            {(() => {
+                                const s = (mySeat + 1) % 4;
+                                const active = turn === s && !isGameOver;
+                                return (
+                                    <div className={`flex justify-center rounded-2xl px-2 py-2 transition-all duration-300 ${active ? 'ring-1 ring-yellow-400/60 bg-yellow-400/5' : ''}`}>
+                                        <OpponentHand
+                                            count={hands[s].length}
+                                            label={rankOrder(s) ? `${seatLabel(s, mySeat, playerNames)} #${rankOrder(s)}` : seatLabel(s, mySeat, playerNames)}
+                                            position="right"
+                                            isActive={active}
+                                        />
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
 
-                    {/* My hand */}
-                    <div className="border-t bg-muted/20 px-4 pt-4 pb-6">
+                    {/* Bottom gold accent stripe */}
+                    <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/40 to-yellow-700/0" />
+
+                    {/* My hand section */}
+                    <div className="bg-zinc-950 px-4 pt-4 pb-6">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                Your hand ({myHand.length} cards)
-                                {rankOrder(mySeat) && ` 🏆 #${rankOrder(mySeat)}`}
+                            <span className="text-[10px] font-bold text-yellow-500/70 uppercase tracking-widest">
+                                Your Hand ({myHand.length})
+                                {rankOrder(mySeat) ? ` · Rank #${rankOrder(mySeat)}` : ''}
                             </span>
                             {selected.length > 0 && (
-                                <span className="text-xs text-muted-foreground">
-                                    {selected.length} selected
-                                </span>
+                                <span className="text-xs text-emerald-400/60">{selected.length} selected</span>
                             )}
                         </div>
 
                         {/* Cards */}
-                        <div className="flex flex-wrap gap-1.5 justify-center min-h-[5rem]">
+                        <div className="flex flex-wrap gap-1.5 justify-center min-h-[6rem]">
                             {myHand.map((card) => (
                                 <CardFace
                                     key={card.id}
@@ -1050,59 +1161,73 @@ export default function TienLenPage() {
                                 />
                             ))}
                             {myHand.length === 0 && (
-                                <p className="text-sm text-muted-foreground self-center">
-                                    {winners.includes(mySeat) ? '✅ You finished!' : 'Waiting for cards…'}
-                                </p>
+                                <div className="flex items-center justify-center w-full">
+                                    <span className="text-sm text-emerald-600/50">
+                                        {winners.includes(mySeat) ? '✅ You finished!' : 'Waiting for cards…'}
+                                    </span>
+                                </div>
                             )}
                         </div>
 
                         {/* Action bar */}
-                        <div className="mt-4 flex items-center justify-center gap-3">
-                            {playError && (
-                                <p className="text-xs text-destructive absolute">{playError}</p>
-                            )}
-                            <Button
+                        <div className="mt-5 flex items-center justify-center gap-3">
+                            <button
                                 onClick={handlePlay}
                                 disabled={turn !== mySeat || selected.length === 0 || isGameOver || winners.includes(mySeat)}
-                                className="w-28"
+                                className="w-28 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95
+                                    bg-gradient-to-b from-yellow-400 to-yellow-600 text-yellow-950
+                                    shadow-lg shadow-yellow-700/30 hover:from-yellow-300 hover:to-yellow-500 hover:shadow-yellow-600/40
+                                    disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
                             >
                                 Play
-                            </Button>
-                            <Button
-                                variant="outline"
+                            </button>
+                            <button
                                 onClick={handlePass}
                                 disabled={turn !== mySeat || !table || isGameOver || winners.includes(mySeat)}
-                                className="w-28"
+                                className="w-28 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95
+                                    bg-transparent border border-emerald-700/50 text-emerald-400
+                                    hover:bg-emerald-900/40 hover:border-emerald-600
+                                    disabled:opacity-25 disabled:cursor-not-allowed"
                             >
                                 Pass
-                            </Button>
+                            </button>
                         </div>
                         {playError && (
-                            <p className="text-xs text-destructive text-center mt-2">{playError}</p>
+                            <p className="text-xs text-red-400 text-center mt-2 font-medium">{playError}</p>
                         )}
                     </div>
                 </div>
 
-                {/* Score summary when game over */}
+                {/* Game over rankings */}
                 {isGameOver && (
-                    <div className="rounded-xl border bg-card p-4">
-                        <h3 className="font-semibold text-sm mb-3">Final Rankings</h3>
-                        <div className="space-y-1">
-                            {winners.map((s, idx) => (
-                                <div key={s} className="flex items-center gap-2 text-sm">
-                                    <span className="font-bold">#{idx + 1}</span>
-                                    <span>{seatLabel(s, mySeat, playerNames)}</span>
-                                    {idx === 0 && <span className="text-yellow-500">👑 Winner</span>}
-                                </div>
-                            ))}
-                            {/* Loser: the one not in winners */}
-                            {[0, 1, 2, 3].filter((s) => !winners.includes(s)).map((s) => (
-                                <div key={s} className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span className="font-bold">#4</span>
-                                    <span>{seatLabel(s, mySeat, playerNames)}</span>
-                                </div>
-                            ))}
+                    <div className="rounded-2xl border border-yellow-600/20 overflow-hidden"
+                        style={{ background: 'linear-gradient(135deg, #1c1100 0%, #0a1a0a 100%)' }}>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/50 to-yellow-700/0" />
+                        <div className="p-5">
+                            <h3 className="font-black text-yellow-500 tracking-[0.15em] uppercase text-xs mb-4 flex items-center gap-2">
+                                <span>🏆</span> Final Rankings
+                            </h3>
+                            <div className="space-y-2">
+                                {winners.map((s, idx) => (
+                                    <div key={s} className="flex items-center gap-3">
+                                        <span className={`text-sm font-black w-7 ${
+                                            idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-gray-300' : 'text-amber-700'
+                                        }`}>#{idx + 1}</span>
+                                        <span className={`text-sm ${idx === 0 ? 'text-yellow-200 font-bold' : 'text-emerald-200/80'}`}>
+                                            {seatLabel(s, mySeat, playerNames)}
+                                        </span>
+                                        {idx === 0 && <span className="ml-auto text-xs text-yellow-400 font-bold tracking-wide">👑 WINNER</span>}
+                                    </div>
+                                ))}
+                                {[0, 1, 2, 3].filter((s) => !winners.includes(s)).map((s) => (
+                                    <div key={s} className="flex items-center gap-3">
+                                        <span className="text-sm font-black w-7 text-red-600/50">#4</span>
+                                        <span className="text-sm text-emerald-600/40">{seatLabel(s, mySeat, playerNames)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
+                        <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/50 to-yellow-700/0" />
                     </div>
                 )}
             </div>

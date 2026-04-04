@@ -10,7 +10,8 @@ import EditApplicationPage from '@/pages/applications/edit';
 import UsersPage from '@/pages/users/index';
 import EditUserPage from '@/pages/users/edit';
 import PlaygroundPage from '@/pages/playground/index';
-import ChatPage from '@/pages/chat/index';
+import GalleriesPage from '@/pages/galleries/index';
+import GalleriesChatPage from '@/pages/galleries/chat';
 import ClientDocPage from '@/pages/documentation/client';
 import ServerDocPage from '@/pages/documentation/server';
 
@@ -93,10 +94,17 @@ const playgroundRoute = createRoute({
     beforeLoad: requireAuth,
 });
 
-const chatRoute = createRoute({
+const galleriesRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/chat',
-    component: ChatPage,
+    path: '/galleries',
+    component: GalleriesPage,
+    beforeLoad: requireAuth,
+});
+
+const galleriesChatRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/galleries/chat',
+    component: GalleriesChatPage,
     beforeLoad: requireAuth,
 });
 
@@ -123,7 +131,8 @@ const routeTree = rootRoute.addChildren([
     usersRoute,
     editUserRoute,
     playgroundRoute,
-    chatRoute,
+    galleriesRoute,
+    galleriesChatRoute,
     clientDocRoute,
     serverDocRoute,
 ]);

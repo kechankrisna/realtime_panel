@@ -9,8 +9,8 @@ const Badge = ({ className, variant = 'default', ...props }) => (
                 'border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80': variant === 'default',
                 'border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80': variant === 'destructive',
                 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80': variant === 'secondary',
-                'border-transparent bg-green-100 text-green-800': variant === 'success',
-                'border-transparent bg-yellow-100 text-yellow-800': variant === 'warning',
+                'border-transparent bg-green-500/15 text-green-700 dark:text-green-400': variant === 'success',
+                'border-transparent bg-yellow-500/15 text-yellow-700 dark:text-yellow-400': variant === 'warning',
                 'text-foreground': variant === 'outline',
             },
             className

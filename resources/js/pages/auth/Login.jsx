@@ -1,11 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Activity, Sun, Moon, Monitor } from 'lucide-react';
+
+const themeIcons = { light: Sun, dark: Moon, system: Monitor };
+
+function LoginThemeToggle() {
+    const { theme, cycleTheme } = useTheme();
+    const Icon = themeIcons[theme] ?? Monitor;
+    return (
+        <button
+            onClick={cycleTheme}
+            title="Toggle theme"
+            className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+            <Icon className="h-4 w-4" />
+        </button>
+    );
+}
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -35,7 +52,16 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
+        <div className="relative flex min-h-screen items-center justify-center bg-background px-4">
+            {/* Liquid Glass ambient orbs */}
+            <div className="pointer-events-none fixed inset-0 -z-10 select-none overflow-hidden">
+                <div className="animate-blob absolute -left-48 -top-48 h-[550px] w-[550px] rounded-full bg-primary/30 blur-[110px] dark:bg-primary/20" />
+                <div className="animate-blob animation-delay-7 absolute -right-48 top-0 h-[450px] w-[450px] rounded-full bg-indigo-500/25 blur-[90px] dark:bg-indigo-500/15" />
+                <div className="animate-blob animation-delay-12 absolute bottom-0 left-1/2 h-[450px] w-[450px] -translate-x-1/2 rounded-full bg-violet-500/20 blur-[90px] dark:bg-violet-500/10" />
+            </div>
+            <div className="absolute right-4 top-4">
+                <LoginThemeToggle />
+            </div>
             <Card className="w-full max-w-sm">
                 <CardHeader className="text-center">
                     <div className="mb-4 flex justify-center">

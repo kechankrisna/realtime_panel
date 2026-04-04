@@ -233,10 +233,15 @@ export default function ApplicationMonitorPage() {
     // Patch the Pusher WebSocket to intercept all frames (system events, pings, etc.)
     // Server-side app events arrive wrapped as monitor.event on _monitor_{id};
     // we unwrap them to show the real channel and event name.
+    //
+    // IMPORTANT: pusher.connection is a ConnectionManager which has NO .socket property.
+    // The raw WebSocket lives at: pusher.connection.connection.transport.socket
+    // (ConnectionManager.connection → Connection → TransportConnection → WebSocket)
     const patchSocket = useCallback((pusher, appId) => {
         const monitorChannel = `_monitor_${appId}`;
         const tryPatch = (attempt = 0) => {
-            const ws = pusher.connection.socket;
+            // Correct path through pusher-js internals to the raw WebSocket
+            const ws = pusher.connection.connection?.transport?.socket;
             if (!ws && attempt < 20) {
                 setTimeout(() => tryPatch(attempt + 1), 50);
                 return;

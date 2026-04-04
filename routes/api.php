@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ApplicationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\UserController;
@@ -33,4 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/users', UserController::class);
 
     Route::post('/chat/trigger', [ChatController::class, 'trigger']);
+
+    Route::post('/chess/rooms', [ChessController::class, 'store']);
+    Route::post('/chess/rooms/join', [ChessController::class, 'join']);
+    Route::post('/chess/trigger', [ChessController::class, 'trigger']);
 });

@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Zap, Radio, BarChart2 } from 'lucide-react';
+import { MessageCircle, Zap, Radio, BarChart2, Crown } from 'lucide-react';
 
 const apps = [
     {
@@ -14,6 +14,16 @@ const apps = [
         badgeVariant: 'default',
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
+    },
+    {
+        title: 'Chess',
+        description: 'Play chess against a minimax AI or challenge another player in real time via a Soketi channel.',
+        href: '/galleries/chess',
+        icon: Crown,
+        badge: 'Live',
+        badgeVariant: 'default',
+        color: 'text-orange-500',
+        bg: 'bg-orange-500/10',
     },
     {
         title: 'Live Events',

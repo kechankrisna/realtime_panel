@@ -109,7 +109,7 @@ Open **http://localhost** in your browser.
 
 Default credentials after seeding:
 ```
-Email:    admin@example.com
+Email:    admin@email.com
 Password: password
 ```
 
@@ -142,7 +142,6 @@ php artisan migrate --seed
 npm run build
 
 # Start the development server
-php artisan serve
 php artisan serve
 
 # Install Soketi websocket server

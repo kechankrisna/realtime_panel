@@ -5,6 +5,7 @@ import { Chessboard } from 'react-chessboard';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -171,6 +172,8 @@ function generateRoomCode() {
 
 export default function ChessPage() {
     const { user } = useAuth();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     // Navigation: 'setup' | 'lobby' | 'game'
     const [screen, setScreen] = useState('setup');
@@ -457,27 +460,29 @@ export default function ChessPage() {
                     </div>
 
                     {/* Casino hero banner */}
-                    <div className="relative overflow-hidden rounded-2xl border border-yellow-900/30 px-6 py-5"
-                        style={{ background: 'radial-gradient(ellipse at 30% 50%, #2a1a00 0%, #0d0900 80%)' }}>
+                    <div className="relative overflow-hidden rounded-2xl border dark:border-yellow-900/30 border-yellow-700/30 px-6 py-5"
+                        style={{ background: isDark
+                            ? 'radial-gradient(ellipse at 30% 50%, #2a1a00 0%, #0d0900 80%)'
+                            : 'radial-gradient(ellipse at 30% 50%, #fdf6e3 0%, #edd98a 80%)' }}>
                         <div className="absolute inset-0 flex items-center justify-around pointer-events-none select-none opacity-[0.05] text-9xl text-yellow-300 font-serif">
                             <span>♛</span><span>♜</span><span>♝</span><span>♞</span>
                         </div>
-                        <p className="relative text-sm text-yellow-200/50 max-w-xl leading-relaxed">
+                        <p className="relative text-sm dark:text-yellow-200/50 text-yellow-900/60 max-w-xl leading-relaxed">
                             Classical chess — minimax AI or live multiplayer via Soketi.{' '}
-                            <span className="text-yellow-400/80 font-semibold">Drag pieces</span> to make your move. Resign anytime.
+                            <span className="dark:text-yellow-400/80 text-yellow-700 font-semibold">Drag pieces</span> to make your move. Resign anytime.
                         </p>
                     </div>
 
                     {/* Mode cards */}
                     <div className="grid gap-4 md:grid-cols-3">
                         {/* VS Machine */}
-                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                        <div className="rounded-2xl border dark:border-yellow-900/25 border-yellow-700/25 bg-gradient-to-b dark:from-stone-950 dark:to-zinc-950 from-amber-50 to-stone-50 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/20">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10 border border-green-500/20">
                                 <Bot className="h-6 w-6 text-green-400" />
                             </div>
                             <div>
-                                <h2 className="font-bold text-base text-white">VS Machine</h2>
-                                <p className="text-sm text-yellow-200/30 mt-1">Play against a minimax AI. No setup required — start instantly.</p>
+                                <h2 className="font-bold text-base dark:text-white text-stone-900">VS Machine</h2>
+                                <p className="text-sm dark:text-yellow-200/30 text-stone-500 mt-1">Play against a minimax AI. No setup required — start instantly.</p>
                             </div>
                             <button
                                 onClick={startVsMachine}
@@ -490,18 +495,18 @@ export default function ChessPage() {
                         </div>
 
                         {/* Create Room */}
-                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                        <div className="rounded-2xl border dark:border-yellow-900/25 border-yellow-700/25 bg-gradient-to-b dark:from-stone-950 dark:to-zinc-950 from-amber-50 to-stone-50 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/20">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20">
                                 <Crown className="h-6 w-6 text-blue-400" />
                             </div>
                             <div>
-                                <h2 className="font-bold text-base text-white">Create Room</h2>
-                                <p className="text-sm text-yellow-200/30 mt-1">Host a live match. Share the room code with your opponent.</p>
+                                <h2 className="font-bold text-base dark:text-white text-stone-900">Create Room</h2>
+                                <p className="text-sm dark:text-yellow-200/30 text-stone-500 mt-1">Host a live match. Share the room code with your opponent.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs text-yellow-300/50">Soketi Application</Label>
+                                <Label className="text-xs dark:text-yellow-300/50 text-yellow-700">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger className="bg-black/30 border-yellow-900/30 text-yellow-100 text-sm">
+                                    <SelectTrigger className="dark:bg-black/30 bg-white dark:border-yellow-900/30 border-amber-300/60 dark:text-yellow-100 text-stone-800 text-sm">
                                         <SelectValue placeholder="Select an app…" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -526,18 +531,18 @@ export default function ChessPage() {
                         </div>
 
                         {/* Join Room */}
-                        <div className="rounded-2xl border border-yellow-900/25 bg-gradient-to-b from-stone-950 to-zinc-950 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/30">
+                        <div className="rounded-2xl border dark:border-yellow-900/25 border-yellow-700/25 bg-gradient-to-b dark:from-stone-950 dark:to-zinc-950 from-amber-50 to-stone-50 p-6 flex flex-col gap-4 transition-all hover:border-yellow-700/40 hover:shadow-lg hover:shadow-yellow-950/20">
                             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20">
                                 <LogIn className="h-6 w-6 text-purple-400" />
                             </div>
                             <div>
-                                <h2 className="font-bold text-base text-white">Join Room</h2>
-                                <p className="text-sm text-yellow-200/30 mt-1">Enter a code to join an open game waiting for a second player.</p>
+                                <h2 className="font-bold text-base dark:text-white text-stone-900">Join Room</h2>
+                                <p className="text-sm dark:text-yellow-200/30 text-stone-500 mt-1">Enter a code to join an open game waiting for a second player.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs text-yellow-300/50">Soketi Application</Label>
+                                <Label className="text-xs dark:text-yellow-300/50 text-yellow-700">Soketi Application</Label>
                                 <Select value={appId} onValueChange={handleAppChange}>
-                                    <SelectTrigger className="bg-black/30 border-yellow-900/30 text-yellow-100 text-sm">
+                                    <SelectTrigger className="dark:bg-black/30 bg-white dark:border-yellow-900/30 border-amber-300/60 dark:text-yellow-100 text-stone-800 text-sm">
                                         <SelectValue placeholder="Select an app…" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -548,13 +553,13 @@ export default function ChessPage() {
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-xs text-yellow-300/50">Room Code</Label>
+                                <Label className="text-xs dark:text-yellow-300/50 text-yellow-700">Room Code</Label>
                                 <Input
                                     placeholder="e.g. A3B2C1"
                                     value={roomInput}
                                     onChange={(e) => { setRoomInput(e.target.value.toUpperCase()); setJoinError(''); }}
                                     maxLength={10}
-                                    className="font-mono uppercase tracking-widest bg-black/30 border-yellow-900/30 text-yellow-100"
+                                    className="font-mono uppercase tracking-widest dark:bg-black/30 bg-white dark:border-yellow-900/30 border-amber-300/60 dark:text-yellow-100 text-stone-800"
                                 />
                                 {joinError && <p className="text-xs text-red-400">{joinError}</p>}
                             </div>
@@ -674,8 +679,12 @@ export default function ChessPage() {
                         <div className="rounded-xl overflow-hidden"
                             style={{
                                 padding: 10,
-                                background: 'linear-gradient(145deg, #3b2300 0%, #1e1200 50%, #2e1a00 100%)',
-                                boxShadow: '0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(202,163,90,0.25), inset 0 1px 0 rgba(255,220,100,0.1)',
+                                background: isDark
+                                    ? 'linear-gradient(145deg, #3b2300 0%, #1e1200 50%, #2e1a00 100%)'
+                                    : 'linear-gradient(145deg, #c8a030 0%, #8b5e15 50%, #a07020 100%)',
+                                boxShadow: isDark
+                                    ? '0 25px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(202,163,90,0.25), inset 0 1px 0 rgba(255,220,100,0.1)'
+                                    : '0 15px 40px rgba(100,60,0,0.3), 0 0 0 1px rgba(202,163,90,0.5), inset 0 1px 0 rgba(255,220,100,0.3)',
                             }}
                         >
                             <Chessboard
@@ -698,29 +707,31 @@ export default function ChessPage() {
                     {/* Info panel */}
                     <div className="flex flex-col gap-3">
                         {/* Status card */}
-                        <div className="rounded-2xl border border-yellow-900/30 overflow-hidden"
-                            style={{ background: 'linear-gradient(160deg, #1c1100 0%, #0a0800 100%)' }}>
+                        <div className="rounded-2xl border dark:border-yellow-900/30 border-yellow-700/30 overflow-hidden"
+                            style={{ background: isDark
+                                ? 'linear-gradient(160deg, #1c1100 0%, #0a0800 100%)'
+                                : 'linear-gradient(160deg, #fef9ec 0%, #fdf1d0 100%)' }}>
                             <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/40 to-yellow-700/0" />
                             <div className="p-4 space-y-3">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] font-bold text-yellow-600/50 uppercase tracking-widest">
+                                    <span className="text-[10px] font-bold dark:text-yellow-600/50 text-yellow-700/60 uppercase tracking-widest">
                                         {mode === 'machine' ? 'VS Machine' : `VS Player · ${playerColor === 'w' ? 'White ♙' : 'Black ♟'}`}
                                     </span>
                                     {mode === 'player' && roomCode && (
-                                        <span className="font-mono text-[10px] text-yellow-700/60 border border-yellow-900/30 rounded px-1.5 py-0.5">{roomCode}</span>
+                                        <span className="font-mono text-[10px] dark:text-yellow-700/60 text-yellow-600/80 border dark:border-yellow-900/30 border-yellow-600/30 rounded px-1.5 py-0.5">{roomCode}</span>
                                     )}
                                 </div>
-                                <p className={`text-sm font-semibold leading-snug ${isGameOver ? 'text-yellow-400' : 'text-yellow-100/90'}`}>
+                                <p className={`text-sm font-semibold leading-snug ${isGameOver ? 'dark:text-yellow-400 text-yellow-600' : 'dark:text-yellow-100/90 text-stone-800'}`}>
                                     {status}
                                 </p>
                                 {thinking && (
-                                    <p className="flex items-center gap-1.5 text-xs text-yellow-600/50">
+                                    <p className="flex items-center gap-1.5 text-xs dark:text-yellow-600/50 text-stone-500">
                                         <Loader2 className="h-3 w-3 animate-spin" />
                                         AI is thinking…
                                     </p>
                                 )}
                                 {mode === 'player' && !opponentJoined && (
-                                    <p className="flex items-center gap-1.5 text-xs text-yellow-600/50">
+                                    <p className="flex items-center gap-1.5 text-xs dark:text-yellow-600/50 text-stone-500">
                                         <Loader2 className="h-3 w-3 animate-spin" />
                                         Waiting for opponent…
                                     </p>
@@ -729,23 +740,25 @@ export default function ChessPage() {
                         </div>
 
                         {/* Move history */}
-                        <div className="rounded-2xl border border-yellow-900/30 flex-1 overflow-hidden flex flex-col"
-                            style={{ background: 'linear-gradient(160deg, #141005 0%, #080600 100%)' }}>
-                            <div className="px-4 py-2.5 border-b border-yellow-900/20 flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-yellow-600/50 uppercase tracking-[0.2em]">Move History</span>
+                        <div className="rounded-2xl border dark:border-yellow-900/30 border-yellow-700/30 flex-1 overflow-hidden flex flex-col"
+                            style={{ background: isDark
+                                ? 'linear-gradient(160deg, #141005 0%, #080600 100%)'
+                                : 'linear-gradient(160deg, #fef9ec 0%, #f9f0d8 100%)' }}>
+                            <div className="px-4 py-2.5 border-b dark:border-yellow-900/20 border-yellow-700/20 flex items-center gap-2">
+                                <span className="text-[10px] font-bold dark:text-yellow-600/50 text-yellow-700/60 uppercase tracking-[0.2em]">Move History</span>
                             </div>
                             <div className="h-52 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
                                 {movePairs.length === 0 ? (
-                                    <p className="text-xs text-yellow-900/60 text-center pt-6 select-none">No moves yet</p>
+                                    <p className="text-xs dark:text-yellow-900/60 text-stone-400 text-center pt-6 select-none">No moves yet</p>
                                 ) : (
                                     movePairs.map(({ num, w, b }) => (
                                         <div
                                             key={num}
                                             className="grid grid-cols-[2rem_1fr_1fr] gap-1 text-xs px-2 py-1 rounded-lg hover:bg-yellow-900/10 transition-colors"
                                         >
-                                            <span className="text-yellow-800/60 font-medium">{num}.</span>
-                                            <span className="text-yellow-100/80 font-mono">{w}</span>
-                                            <span className="text-yellow-200/40 font-mono">{b}</span>
+                                            <span className="dark:text-yellow-800/60 text-stone-400 font-medium">{num}.</span>
+                                            <span className="dark:text-yellow-100/80 text-stone-700 font-mono">{w}</span>
+                                            <span className="dark:text-yellow-200/40 text-stone-400 font-mono">{b}</span>
                                         </div>
                                     ))
                                 )}
@@ -757,8 +770,8 @@ export default function ChessPage() {
                             <button
                                 onClick={newGame}
                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95
-                                    bg-transparent border border-yellow-900/40 text-yellow-500/70
-                                    hover:bg-yellow-900/20 hover:border-yellow-700/50 hover:text-yellow-400"
+                                    bg-transparent border dark:border-yellow-900/40 border-yellow-700/40 dark:text-yellow-500/70 text-yellow-600
+                                    dark:hover:bg-yellow-900/20 hover:bg-yellow-50 dark:hover:border-yellow-700/50 hover:border-yellow-600/50 dark:hover:text-yellow-400 hover:text-yellow-700"
                             >
                                 <RotateCcw className="h-4 w-4" />
                                 New Game
@@ -767,8 +780,8 @@ export default function ChessPage() {
                                 onClick={resign}
                                 disabled={isGameOver}
                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95
-                                    bg-transparent border border-red-900/40 text-red-500/60
-                                    hover:bg-red-900/20 hover:border-red-700/50 hover:text-red-400
+                                    bg-transparent border dark:border-red-900/40 border-red-700/40 dark:text-red-500/60 text-red-600/70
+                                    dark:hover:bg-red-900/20 hover:bg-red-50 dark:hover:border-red-700/50 hover:border-red-500/50 dark:hover:text-red-400 hover:text-red-600
                                     disabled:opacity-25 disabled:cursor-not-allowed"
                             >
                                 <Flag className="h-4 w-4" />

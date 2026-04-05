@@ -15,9 +15,11 @@ if gosu soketi php artisan migrate --force -q; then
     echo "Migrating application database..."
 fi
 
-if gosu soketi php artisan db:seed; then
-    echo "Creating default admin user..."
-fi
+echo "Setting up super admin..."
+gosu soketi php artisan app:setup-admin
+
+echo "Caching configuration..."
+gosu soketi php artisan optimize
 
 echo "Starting php-fpm server..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

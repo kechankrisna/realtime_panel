@@ -310,16 +310,49 @@ This approach means the monitor shows events in real time regardless of whether 
 ## Screenshots
 
 ### Login
-<img src="screenshots/login.png" width="100%" alt="Login" />
+<img src="screenshots/login.png" width="100%" alt="Login page" />
 
-### Dashboard
-<img src="screenshots/dashboard.png" width="100%" alt="Dashboard" />
+### Dashboard (Dark Mode)
+<img src="screenshots/dashboard.png" width="100%" alt="Dashboard — dark mode" />
+
+### Dashboard (Light Mode)
+<img src="screenshots/dashboard-light.png" width="100%" alt="Dashboard — light mode" />
 
 ### Applications
 <img src="screenshots/view-apps.png" width="100%" alt="Applications list" />
 
 ### Edit Application
 <img src="screenshots/edit-app.png" width="100%" alt="Edit application" />
+
+### Live Monitor
+<img src="screenshots/monitor.png" width="100%" alt="Live WebSocket event monitor" />
+
+### Users
+<img src="screenshots/users.png" width="100%" alt="User management" />
+
+### Playground
+<img src="screenshots/playground.png" width="100%" alt="Event playground" />
+
+### Galleries
+<img src="screenshots/galleries.png" width="100%" alt="Feature galleries" />
+
+### Chat Demo
+<img src="screenshots/galleries-chat.png" width="100%" alt="Real-time chat demo" />
+
+### Chess Demo
+<img src="screenshots/galleries-chess.png" width="100%" alt="Multiplayer chess demo" />
+
+### Tiến Lên Card Game
+<img src="screenshots/galleries-tienlen.png" width="100%" alt="Tiến Lên card game demo" />
+
+### Client Documentation
+<img src="screenshots/docs-client.png" width="100%" alt="Client-side SDK documentation" />
+
+### Server Documentation
+<img src="screenshots/docs-server.png" width="100%" alt="Server-side API documentation" />
+
+### Profile
+<img src="screenshots/profile.png" width="100%" alt="User profile" />
 
 ---
 

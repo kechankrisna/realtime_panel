@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Services\PusherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Pusher\Pusher;
 
 class ApplicationController extends Controller
 {
@@ -106,7 +106,7 @@ class ApplicationController extends Controller
 
         $options = config('broadcasting.connections.pusher.options');
 
-        $pusher = new Pusher($application->key, $application->secret, $application->id, $options);
+        $pusher = app(PusherService::class)->make($application->key, $application->secret, $application->id, $options);
 
         try {
             $result = $pusher->get('/channels');

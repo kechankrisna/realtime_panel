@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Services\PusherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Pusher\Pusher;
 
 class TienLenController extends Controller
 {
@@ -94,7 +94,7 @@ class TienLenController extends Controller
 
         $options = config('broadcasting.connections.pusher.options');
 
-        $pusher = new Pusher(
+        $pusher = app(PusherService::class)->make(
             $app->key,
             $app->secret,
             $app->id,

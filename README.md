@@ -67,13 +67,15 @@ Full light / dark / system theme support persisted to `localStorage`.
 | Database | MySQL 8 or PostgreSQL 13+ |
 | Cache / Queue | Redis 7 |
 | Build | Vite 5 |
+| Runtime | Node.js 20+ (LTS) |
+| Testing | PHPUnit, Vitest, Playwright |
 
 ---
 
 ## Requirements
 
 - Docker & Docker Compose (recommended) **or**
-- PHP 8.1+, Composer 2, Node.js 18+, MySQL 8 / PostgreSQL 13+, Redis 6+
+- PHP 8.1+, Composer 2, Node.js 20+ (LTS), MySQL 8 / PostgreSQL 13+, Redis 6+
 - A running Soketi instance configured with MySQL/PostgreSQL app manager and Redis caching
 
 ---
@@ -268,8 +270,18 @@ npm run dev
 # Build for production
 npm run build
 
-# Run PHP tests
+# Run PHP unit & feature tests (SQLite in-memory, no Docker required)
 php artisan test
+
+# Run frontend tests (Vitest + jsdom)
+npm test
+
+# Run E2E tests (Playwright — requires the Docker stack to be running)
+npx playwright install chromium   # first time only
+npm run test:e2e
+
+# Run E2E tests including the WebSocket delivery smoke test
+E2E_WEBSOCKET=1 npm run test:e2e
 
 # Format PHP code
 ./vendor/bin/pint
@@ -277,6 +289,47 @@ php artisan test
 # Clear all caches
 php artisan optimize:clear
 ```
+
+---
+
+## Testing
+
+The project ships with a three-tier test suite.
+
+### PHP Tests (`php artisan test`)
+
+Uses PHPUnit with an **SQLite in-memory** database — no external services needed.
+
+| Suite | Location | What it covers |
+|-------|----------|----------------|
+| Unit | `tests/Unit/` | `parse_prometheus()` helper, `UserPolicy`, `Application::clearCache()` contract delegation |
+| Feature | `tests/Feature/` | All API endpoints — Auth (login/logout/profile), Applications (CRUD + toggle + ownership), Users (CRUD), Config, Chat/Chess/Tiến Lên triggers, Artisan commands |
+
+Key test infrastructure:
+- `tests/Concerns/MocksWebSocketServer.php` — swaps the `WebSocketServerContract` binding with a mock/spy so cache-invalidation calls are verified without a Redis connection.
+- `database/factories/ApplicationFactory.php` — covers all 20 application columns; `.disabled()` state included.
+- `database/factories/UserFactory.php` — `.admin()` and `.inactive()` states.
+
+### Frontend Tests (`npm test`)
+
+Uses **Vitest** + **jsdom** + Testing Library.
+
+| File | What it covers |
+|------|----------------|
+| `resources/js/tests/lib/utils.test.js` | `cn()` Tailwind merge utility |
+| `resources/js/tests/hooks/useAuth.test.js` | `useAuth` hook — login, logout, token persistence, refresh |
+| `resources/js/tests/lib/axios.test.js` | Axios `Authorization` header interceptor |
+
+### E2E Tests (`npm run test:e2e`)
+
+Uses **Playwright** (Chromium). Requires the Docker stack (`docker compose up -d`).
+
+| File | What it covers |
+|------|----------------|
+| `e2e/auth.spec.js` | Login redirect, valid login, wrong password, logout |
+| `e2e/applications.spec.js` | Create, view key/secret, toggle enabled state |
+| `e2e/users.spec.js` | List, create, delete user via UI |
+| `e2e/websocket.spec.js` | Real Soketi message delivery (opt-in: `E2E_WEBSOCKET=1`) |
 
 ---
 

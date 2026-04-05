@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Services\PusherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Pusher\Pusher;
 
 class ChatController extends Controller
 {
@@ -27,7 +27,7 @@ class ChatController extends Controller
 
         $options = config('broadcasting.connections.pusher.options');
 
-        $pusher = new Pusher(
+        $pusher = app(PusherService::class)->make(
             $app->key,
             $app->secret,
             $app->id,
@@ -36,8 +36,6 @@ class ChatController extends Controller
 
         $pusher->trigger($validated['channel'], 'message', $validated['data']);
 
-        // Relay to dedicated monitor channel so the monitoring page receives events
-        // regardless of whether it is currently subscribed to the original channel.
         $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
             'channel' => $validated['channel'],
             'event'   => 'message',

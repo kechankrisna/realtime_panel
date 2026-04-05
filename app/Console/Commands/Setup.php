@@ -12,8 +12,16 @@ class Setup extends Command
 
     public function handle(): int
     {
+        $this->info('► Clearing cache...');
+        $this->call('optimize:clear');
+
+        $this->newLine();
         $this->info('► Generating application key...');
-        $this->call('key:generate');
+        if (empty(config('app.key'))) {
+            $this->call('key:generate');
+        } else {
+            $this->line('  Application key already set, skipping.');
+        }
 
         $this->newLine();
         $this->info('► Running database migrations...');
@@ -21,11 +29,7 @@ class Setup extends Command
 
         $this->newLine();
         $this->info('► Linking storage...');
-        $this->call('storage:link');
-
-        $this->newLine();
-        $this->info('► Clearing cache...');
-        $this->call('cache:clear');
+        $this->call('storage:link', ['--force' => true]);
 
         $this->newLine();
         $this->info('► Setting up super admin...');
@@ -34,6 +38,10 @@ class Setup extends Command
         if ($exitCode !== self::SUCCESS) {
             return $exitCode;
         }
+
+        $this->newLine();
+        $this->info('► Caching configuration...');
+        $this->call('optimize');
 
         $this->newLine();
         $this->info('✔ Setup complete.');

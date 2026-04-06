@@ -177,7 +177,7 @@ export function Sidebar({ pinned, onPinToggle }) {
                 <div className="flex h-14 shrink-0 items-center border-b px-3">
                     <Link to="/" className="flex min-w-0 items-center gap-2.5 text-primary">
                         <Activity className="h-5 w-5 shrink-0" />
-                        {expanded && <span className="truncate font-semibold">Soketi Apps</span>}
+                        {expanded && <span className="truncate font-semibold">RealtimePanel</span>}
                     </Link>
                     {expanded && (
                         <button
@@ -265,7 +265,7 @@ export function Sidebar({ pinned, onPinToggle }) {
                 </button>
                 <Link to="/" className="flex items-center gap-2 font-semibold text-primary">
                     <Activity className="h-5 w-5" />
-                    <span>Soketi Apps</span>
+                    <span>RealtimePanel</span>
                 </Link>
                 <div className="ml-auto">
                     <UserMenu user={user} expanded={true} side="bottom" onOpenChange={() => {}} />
@@ -287,7 +287,7 @@ export function Sidebar({ pinned, onPinToggle }) {
                                 className="flex items-center gap-2 font-semibold text-primary"
                             >
                                 <Activity className="h-5 w-5" />
-                                <span>Soketi Apps</span>
+                                <span>RealtimePanel</span>
                             </Link>
                             <button
                                 onClick={() => setMobileOpen(false)}

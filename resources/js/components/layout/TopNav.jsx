@@ -24,7 +24,7 @@ export function TopNav({ user, onLogout }) {
             <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-6 px-4">
                 <Link to="/" className="flex items-center gap-2 font-semibold text-primary">
                     <Activity className="h-5 w-5" />
-                    <span>Soketi Apps</span>
+                    <span>RealtimePanel</span>
                 </Link>
 
                 <nav className="flex flex-1 items-center gap-1">

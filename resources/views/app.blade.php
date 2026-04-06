@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="none,noarchive,nositelinkssearchbox" />
     <meta name="app-version" content="{{ config('app.version', '1.0.0') }}" />
-    <title>{{ config('app.name', 'Soketi Apps') }}</title>
+    <title>{{ config('app.name', 'RealtimePanel') }}</title>
     {{-- Prevent flash of unstyled content: apply dark class before first paint --}}
     <script>
         (function () {
-            var t = localStorage.getItem('soketi-theme');
+            var t = localStorage.getItem('realtimepanel-theme');
             var dark = t === 'dark' || !t || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
             if (dark) document.documentElement.classList.add('dark');
         })();

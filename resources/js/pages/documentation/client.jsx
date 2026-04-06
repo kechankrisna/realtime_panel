@@ -27,7 +27,7 @@ export default function ClientDocPage() {
 
     const host = cfg?.app_host ?? 'your-server';
     const port = cfg?.app_port ?? '6001';
-    const appName = cfg?.app_name ?? 'soketi';
+    const appName = cfg?.app_name ?? 'realtimepanel';
 
     return (
         <AppLayout>

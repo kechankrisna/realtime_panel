@@ -162,7 +162,7 @@ async function navigate(page, url) {
     await page.evaluate((token, user) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('soketi-theme', 'light');
+        localStorage.setItem('realtimepanel-theme', 'light');
     }, authData.token, authData.user);
     await navigate(page, '/');
     await new Promise(r => setTimeout(r, 1000));

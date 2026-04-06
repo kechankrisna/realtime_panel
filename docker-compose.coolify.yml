@@ -1,7 +1,7 @@
-# documentation: https://github.com/kechankrisna/soketi-apps
-# slogan: Manage soketi websocket server and apps with ease.
+# documentation: https://github.com/kechankrisna/realtimepanel
+# slogan: Self-hosted WebSocket management dashboard for Soketi and Pusher-compatible servers.
 # tags: soketi,websockets,app-manager,dashboard
-# logo: svgs/soketi-apps.svg
+# logo: svgs/realtimepanel.svg
 # port: 8080
 
 services:

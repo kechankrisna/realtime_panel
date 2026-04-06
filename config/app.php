@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Soketi Apps'),
+    'name' => env('APP_NAME', 'RealtimePanel'),
 
     /*
     |--------------------------------------------------------------------------

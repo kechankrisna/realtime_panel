@@ -31,7 +31,7 @@ export function AppLayout({ children }) {
                 <footer className="border-t glass">
                     <div className="mx-auto flex max-w-screen-xl flex-col items-center justify-between gap-2 px-4 py-3 sm:flex-row">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Soketi Apps</span>
+                            <span className="font-medium text-foreground">RealtimePanel</span>
                             <span className="text-muted-foreground/40">·</span>
                             <span>v{appVersion}</span>
                         </div>
@@ -46,7 +46,7 @@ export function AppLayout({ children }) {
                                 Soketi Docs ↗
                             </a>
                             <a
-                                href="https://github.com/kechankrisna/soketi-apps"
+                                href="https://github.com/kechankrisna/realtimepanel"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-foreground transition-colors"

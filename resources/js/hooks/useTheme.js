@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'soketi-theme';
+const STORAGE_KEY = 'realtimepanel-theme';
 
 function applyTheme(theme) {
     const isDark =

@@ -28,7 +28,7 @@ class ListApplicationsTest extends TestCase
     public function test_non_admin_sees_only_own_applications(): void
     {
         $admin = User::factory()->admin()->create();
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
 
         Application::factory()->create(['created_by' => $admin->id]);
         Application::factory(2)->create(['created_by' => $user->id]);

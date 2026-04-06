@@ -5,8 +5,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
-use App\Http\Controllers\Api\TienLenController;
 use App\Http\Controllers\Api\MetricsController;
+use App\Http\Controllers\Api\TienLenController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 

@@ -14,7 +14,7 @@ class ShowApplicationTest extends TestCase
     public function test_owner_can_view_own_application(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->getJson("/api/applications/{$app->id}")
@@ -26,7 +26,7 @@ class ShowApplicationTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id]);
+        $app = Application::factory()->create(['created_by' => $other->id]);
 
         $this->actingAs($admin, 'sanctum')
             ->getJson("/api/applications/{$app->id}")
@@ -35,9 +35,9 @@ class ShowApplicationTest extends TestCase
 
     public function test_non_owner_gets_403(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id]);
+        $app = Application::factory()->create(['created_by' => $other->id]);
 
         $this->actingAs($user, 'sanctum')
             ->getJson("/api/applications/{$app->id}")

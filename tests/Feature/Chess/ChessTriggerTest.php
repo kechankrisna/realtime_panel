@@ -29,14 +29,14 @@ class ChessTriggerTest extends TestCase
         $this->mockPusher();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM01',
-                'type'           => 'move',
-                'payload'        => ['from' => 'e2', 'to' => 'e4'],
+                'room_code' => 'ROOM01',
+                'type' => 'move',
+                'payload' => ['from' => 'e2', 'to' => 'e4'],
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -52,28 +52,28 @@ class ChessTriggerTest extends TestCase
         });
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM01',
-                'type'           => 'resign',
-                'payload'        => ['reason' => 'test'],
+                'room_code' => 'ROOM01',
+                'type' => 'resign',
+                'payload' => ['reason' => 'test'],
             ]);
     }
 
     public function test_invalid_type_returns_422(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM01',
-                'type'           => 'invalid-type',
-                'payload'        => [],
+                'room_code' => 'ROOM01',
+                'type' => 'invalid-type',
+                'payload' => [],
             ])
             ->assertUnprocessable();
     }
@@ -81,14 +81,14 @@ class ChessTriggerTest extends TestCase
     public function test_disabled_app_returns_404(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->disabled()->create(['created_by' => $user->id]);
+        $app = Application::factory()->disabled()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM01',
-                'type'           => 'move',
-                'payload'        => ['move' => 'e2-e4'],
+                'room_code' => 'ROOM01',
+                'type' => 'move',
+                'payload' => ['move' => 'e2-e4'],
             ])
             ->assertNotFound();
     }

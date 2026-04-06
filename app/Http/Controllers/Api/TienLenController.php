@@ -19,7 +19,7 @@ class TienLenController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:10'],
+            'room_code' => ['required', 'string', 'max:10'],
         ]);
 
         Application::ownershipAware()
@@ -27,12 +27,12 @@ class TienLenController extends Controller
             ->findOrFail($validated['application_id']);
 
         Cache::put(
-            'tienlen_room_' . $validated['room_code'],
+            'tienlen_room_'.$validated['room_code'],
             [
-                'status'         => 'waiting',
-                'seats'          => 1,
+                'status' => 'waiting',
+                'seats' => 1,
                 'application_id' => $validated['application_id'],
-                'creator_id'     => Auth::id(),
+                'creator_id' => Auth::id(),
             ],
             now()->addMinutes(90)
         );
@@ -47,13 +47,13 @@ class TienLenController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:10'],
+            'room_code' => ['required', 'string', 'max:10'],
         ]);
 
-        $key  = 'tienlen_room_' . $validated['room_code'];
+        $key = 'tienlen_room_'.$validated['room_code'];
         $room = Cache::get($key);
 
-        if (!$room) {
+        if (! $room) {
             return response()->json(['message' => 'Room not found.'], 404);
         }
 
@@ -69,7 +69,7 @@ class TienLenController extends Controller
         $newStatus = $newSeats >= 4 ? 'playing' : 'waiting';
 
         Cache::put($key, array_merge($room, [
-            'seats'  => $newSeats,
+            'seats' => $newSeats,
             'status' => $newStatus,
         ]), now()->addMinutes(90));
 
@@ -83,9 +83,9 @@ class TienLenController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:50'],
-            'type'           => ['required', 'string', 'in:seat,deal,play,pass,win,chat'],
-            'payload'        => ['required', 'array'],
+            'room_code' => ['required', 'string', 'max:50'],
+            'type' => ['required', 'string', 'in:seat,deal,play,pass,win,chat'],
+            'payload' => ['required', 'array'],
         ]);
 
         $app = Application::ownershipAware()
@@ -102,15 +102,15 @@ class TienLenController extends Controller
         );
 
         $payload = array_merge(['type' => $validated['type']], $validated['payload']);
-        $channel = 'tienlen-' . $validated['room_code'];
+        $channel = 'tienlen-'.$validated['room_code'];
 
         $pusher->trigger($channel, 'tienlen-event', $payload);
 
         // Relay to dedicated monitor channel.
-        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+        $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
             'channel' => $channel,
-            'event'   => 'tienlen-event',
-            'data'    => $payload,
+            'event' => 'tienlen-event',
+            'data' => $payload,
         ]);
 
         return response()->json(['ok' => true]);

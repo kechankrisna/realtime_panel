@@ -12,7 +12,7 @@ class LogoutTest extends TestCase
 
     public function test_authenticated_user_can_logout(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $token = $user->createToken('spa')->plainTextToken;
 
         $this->withToken($token)
@@ -28,9 +28,9 @@ class LogoutTest extends TestCase
 
     public function test_logout_invalidates_token(): void
     {
-        $user  = User::factory()->create(['password' => 'password']);
+        $user = User::factory()->create(['password' => 'password']);
         $token = $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'password',
         ])->json('token');
 

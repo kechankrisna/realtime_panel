@@ -10,14 +10,14 @@ use Tests\TestCase;
 
 class ToggleApplicationTest extends TestCase
 {
-    use RefreshDatabase, MocksWebSocketServer;
+    use MocksWebSocketServer, RefreshDatabase;
 
     public function test_owner_can_toggle_application(): void
     {
         $this->mockWebSocketServer();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson("/api/applications/{$app->id}/toggle")
@@ -29,9 +29,9 @@ class ToggleApplicationTest extends TestCase
 
     public function test_toggle_clears_cache(): void
     {
-        $spy  = $this->spyWebSocketServer();
+        $spy = $this->spyWebSocketServer();
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson("/api/applications/{$app->id}/toggle");
@@ -44,7 +44,7 @@ class ToggleApplicationTest extends TestCase
         $this->mockWebSocketServer();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->disabled()->create(['created_by' => $user->id]);
+        $app = Application::factory()->disabled()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson("/api/applications/{$app->id}/toggle")
@@ -54,9 +54,9 @@ class ToggleApplicationTest extends TestCase
 
     public function test_non_owner_gets_403(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id]);
+        $app = Application::factory()->create(['created_by' => $other->id]);
 
         $this->actingAs($user, 'sanctum')
             ->patchJson("/api/applications/{$app->id}/toggle")

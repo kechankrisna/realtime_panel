@@ -22,7 +22,7 @@ class SetupCommandTest extends TestCase
             ->assertSuccessful();
 
         $this->assertDatabaseHas('users', [
-            'email'    => 'admin@test.com',
+            'email' => 'admin@test.com',
             'is_admin' => 1,
         ]);
     }

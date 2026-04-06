@@ -16,7 +16,7 @@ class SetupAdminCommandTest extends TestCase
             ->assertSuccessful();
 
         $this->assertDatabaseHas('users', [
-            'email'    => 'admin@test.com',
+            'email' => 'admin@test.com',
             'is_admin' => 1,
             'is_active' => 1,
         ]);
@@ -25,8 +25,8 @@ class SetupAdminCommandTest extends TestCase
     public function test_updates_existing_admin_user(): void
     {
         User::factory()->create([
-            'email'    => 'admin@test.com',
-            'name'     => 'Old Name',
+            'email' => 'admin@test.com',
+            'name' => 'Old Name',
             'is_admin' => true,
         ]);
 
@@ -35,7 +35,7 @@ class SetupAdminCommandTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'admin@test.com',
-            'name'  => 'Test Admin',
+            'name' => 'Test Admin',
         ]);
     }
 

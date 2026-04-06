@@ -14,7 +14,7 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
@@ -36,7 +36,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => $this->formatUser($user),
+            'user' => $this->formatUser($user),
         ]);
     }
 
@@ -57,8 +57,8 @@ class AuthController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'max:100', 'unique:users,email,'.$user->id],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:100', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'string', 'min:8', 'max:100'],
         ]);
 
@@ -74,11 +74,11 @@ class AuthController extends Controller
     private function formatUser(User $user): array
     {
         return [
-            'id'       => $user->id,
-            'name'     => $user->name,
-            'email'    => $user->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
             'is_admin' => (bool) $user->is_admin,
-            'is_active'=> (bool) $user->is_active,
+            'is_active' => (bool) $user->is_active,
         ];
     }
 }

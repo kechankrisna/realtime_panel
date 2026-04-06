@@ -32,16 +32,16 @@ class MetricsController extends Controller
 
         // Parse memory usage
         $memoryPercent = null;
-        $memoryTotal   = null;
-        $usedCollection  = parse_prometheus('soketi_nodejs_heap_size_used_bytes', $metricsRaw);
+        $memoryTotal = null;
+        $usedCollection = parse_prometheus('soketi_nodejs_heap_size_used_bytes', $metricsRaw);
         $totalCollection = parse_prometheus('soketi_nodejs_heap_size_total_bytes', $metricsRaw);
         if ($usedCollection->isNotEmpty() && $totalCollection->isNotEmpty()) {
-            $used  = (int) $usedCollection->first()['value'];
+            $used = (int) $usedCollection->first()['value'];
             $total = (int) $totalCollection->first()['value'];
             if ($total > 0) {
                 $memoryPercent = round($used / $total * 100, 1);
-                $memoryUsed    = round($used / 1024 / 1024, 1).' MB';
-                $memoryTotal   = round($total / 1024 / 1024, 1).' MB';
+                $memoryUsed = round($used / 1024 / 1024, 1).' MB';
+                $memoryTotal = round($total / 1024 / 1024, 1).' MB';
             }
         }
 
@@ -63,10 +63,10 @@ class MetricsController extends Controller
         $cpuCollection = parse_prometheus('soketi_process_cpu_seconds_total', $metricsRaw);
         if ($cpuCollection->isNotEmpty()) {
             $currentCpu = (float) $cpuCollection->first()['value'];
-            $now        = microtime(true);
-            $prev       = cache('soketi_cpu_prev');
+            $now = microtime(true);
+            $prev = cache('soketi_cpu_prev');
             if ($prev && isset($prev['cpu'], $prev['time'])) {
-                $deltaCpu  = $currentCpu - $prev['cpu'];
+                $deltaCpu = $currentCpu - $prev['cpu'];
                 $deltaTime = $now - $prev['time'];
                 if ($deltaTime > 0) {
                     $cpuPercent = min(round($deltaCpu / $deltaTime * 100, 1), 100);
@@ -76,13 +76,13 @@ class MetricsController extends Controller
         }
 
         // RAM — Resident Set Size vs total system RAM
-        $ramRss     = null;
+        $ramRss = null;
         $ramPercent = null;
         $ramTotalMb = null;
         $rssCollection = parse_prometheus('soketi_process_resident_memory_bytes', $metricsRaw);
         if ($rssCollection->isNotEmpty()) {
             $rssBytes = (int) $rssCollection->first()['value'];
-            $ramRss   = round($rssBytes / 1024 / 1024, 1).' MB';
+            $ramRss = round($rssBytes / 1024 / 1024, 1).' MB';
 
             // Read total physical RAM from /proc/meminfo (available in Docker/Linux)
             if (is_readable('/proc/meminfo')) {
@@ -99,45 +99,52 @@ class MetricsController extends Controller
         $bytesHelper = function (string $metric) use ($metricsRaw): int {
             return (int) parse_prometheus($metric, $metricsRaw)->sum('value');
         };
-        $netReceived    = $bytesHelper('soketi_socket_received_bytes') + $bytesHelper('soketi_http_received_bytes');
+        $netReceived = $bytesHelper('soketi_socket_received_bytes') + $bytesHelper('soketi_http_received_bytes');
         $netTransmitted = $bytesHelper('soketi_socket_transmitted_bytes') + $bytesHelper('soketi_http_transmitted_bytes');
 
         $formatBytes = function (int $bytes): string {
-            if ($bytes >= 1073741824) return round($bytes / 1073741824, 2).' GB';
-            if ($bytes >= 1048576)    return round($bytes / 1048576, 2).' MB';
-            if ($bytes >= 1024)       return round($bytes / 1024, 1).' KB';
+            if ($bytes >= 1073741824) {
+                return round($bytes / 1073741824, 2).' GB';
+            }
+            if ($bytes >= 1048576) {
+                return round($bytes / 1048576, 2).' MB';
+            }
+            if ($bytes >= 1024) {
+                return round($bytes / 1024, 1).' KB';
+            }
+
             return $bytes.' B';
         };
 
         // Disk usage — of the partition where the app lives
         $diskPercent = null;
-        $diskUsed    = null;
-        $diskTotal   = null;
-        $diskPath    = base_path();
-        $diskFree    = @disk_free_space($diskPath);
+        $diskUsed = null;
+        $diskTotal = null;
+        $diskPath = base_path();
+        $diskFree = @disk_free_space($diskPath);
         $diskTotalRaw = @disk_total_space($diskPath);
         if ($diskFree !== false && $diskTotalRaw > 0) {
             $diskUsedRaw = $diskTotalRaw - $diskFree;
             $diskPercent = round($diskUsedRaw / $diskTotalRaw * 100, 1);
-            $diskUsed    = $formatBytes((int) $diskUsedRaw);
-            $diskTotal   = $formatBytes((int) $diskTotalRaw);
+            $diskUsed = $formatBytes((int) $diskUsedRaw);
+            $diskTotal = $formatBytes((int) $diskTotalRaw);
         }
 
         return response()->json([
-            'started_at'         => $startedAt ?? 'N/A',
-            'memory_percent'     => $memoryPercent,
-            'memory_used'        => $memoryUsed ?? null,
-            'memory_total'       => $memoryTotal ?? null,
-            'total_connections'  => (int) $totalConnections,
-            'cpu_percent'        => $cpuPercent,
-            'ram_rss'            => $ramRss,
-            'ram_percent'        => $ramPercent,
-            'ram_total_mb'       => $ramTotalMb,
-            'net_received'       => $formatBytes($netReceived),
-            'net_transmitted'    => $formatBytes($netTransmitted),
-            'disk_percent'       => $diskPercent,
-            'disk_used'          => $diskUsed,
-            'disk_total'         => $diskTotal,
+            'started_at' => $startedAt ?? 'N/A',
+            'memory_percent' => $memoryPercent,
+            'memory_used' => $memoryUsed ?? null,
+            'memory_total' => $memoryTotal ?? null,
+            'total_connections' => (int) $totalConnections,
+            'cpu_percent' => $cpuPercent,
+            'ram_rss' => $ramRss,
+            'ram_percent' => $ramPercent,
+            'ram_total_mb' => $ramTotalMb,
+            'net_received' => $formatBytes($netReceived),
+            'net_transmitted' => $formatBytes($netTransmitted),
+            'disk_percent' => $diskPercent,
+            'disk_used' => $diskUsed,
+            'disk_total' => $diskTotal,
         ]);
     }
 }

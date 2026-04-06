@@ -12,7 +12,7 @@ class DeleteUserTest extends TestCase
 
     public function test_admin_can_delete_other_user(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $target = User::factory()->create();
 
         $this->actingAs($admin, 'sanctum')
@@ -36,7 +36,7 @@ class DeleteUserTest extends TestCase
 
     public function test_non_admin_cannot_delete_user(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $target = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')

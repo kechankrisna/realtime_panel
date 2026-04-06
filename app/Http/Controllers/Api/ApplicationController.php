@@ -27,8 +27,8 @@ class ApplicationController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('id', 'like', "%{$search}%")
-                  ->orWhere('key', 'like', "%{$search}%");
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhere('key', 'like', "%{$search}%");
             });
         }
 
@@ -38,13 +38,13 @@ class ApplicationController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'    => ['required', 'string', 'max:100', 'unique:applications,name'],
+            'name' => ['required', 'string', 'max:100', 'unique:applications,name'],
             'enabled' => ['required', 'boolean'],
         ]);
 
-        $data['key']        = md5(Str::random(32));
-        $data['secret']     = md5(Str::random(32));
-        $data['webhooks']   = [];
+        $data['key'] = md5(Str::random(32));
+        $data['secret'] = md5(Str::random(32));
+        $data['webhooks'] = [];
         $data['created_by'] = auth()->id();
 
         $app = Application::create($data);
@@ -64,27 +64,27 @@ class ApplicationController extends Controller
         $this->authorizeOwnership($application);
 
         $data = $request->validate([
-            'name'                             => ['required', 'string', 'max:100', 'unique:applications,name,'.$application->id],
-            'enabled'                          => ['boolean'],
-            'enable_client_messages'           => ['boolean'],
-            'enable_user_authentication'       => ['boolean'],
-            'max_connections'                  => ['integer', 'min:-1'],
-            'max_backend_events_per_sec'       => ['integer', 'min:-1'],
-            'max_client_events_per_sec'        => ['integer', 'min:-1'],
-            'max_read_req_per_sec'             => ['integer', 'min:-1'],
-            'max_channel_name_length'          => ['integer', 'min:1', 'max:127'],
-            'max_event_name_length'            => ['integer', 'min:1', 'max:127'],
+            'name' => ['required', 'string', 'max:100', 'unique:applications,name,'.$application->id],
+            'enabled' => ['boolean'],
+            'enable_client_messages' => ['boolean'],
+            'enable_user_authentication' => ['boolean'],
+            'max_connections' => ['integer', 'min:-1'],
+            'max_backend_events_per_sec' => ['integer', 'min:-1'],
+            'max_client_events_per_sec' => ['integer', 'min:-1'],
+            'max_read_req_per_sec' => ['integer', 'min:-1'],
+            'max_channel_name_length' => ['integer', 'min:1', 'max:127'],
+            'max_event_name_length' => ['integer', 'min:1', 'max:127'],
             'max_presence_members_per_channel' => ['integer', 'min:-1', 'max:127'],
-            'max_event_channels_at_once'       => ['integer', 'min:1', 'max:127'],
-            'max_event_batch_size'             => ['integer', 'min:10', 'max:127'],
-            'max_presence_member_size_in_kb'   => ['integer', 'min:10', 'max:127'],
-            'max_event_payload_in_kb'          => ['integer', 'min:10', 'max:127'],
-            'webhooks'                         => ['nullable', 'array'],
-            'webhooks.*.url'                   => ['required', 'url', 'max:100'],
-            'webhooks.*.event_types'           => ['required', 'array'],
-            'webhooks.*.headers'               => ['nullable', 'array'],
-            'webhooks.*.filter'                => ['nullable', 'array'],
-            'created_by'                       => ['nullable', 'integer', 'exists:users,id'],
+            'max_event_channels_at_once' => ['integer', 'min:1', 'max:127'],
+            'max_event_batch_size' => ['integer', 'min:10', 'max:127'],
+            'max_presence_member_size_in_kb' => ['integer', 'min:10', 'max:127'],
+            'max_event_payload_in_kb' => ['integer', 'min:10', 'max:127'],
+            'webhooks' => ['nullable', 'array'],
+            'webhooks.*.url' => ['required', 'url', 'max:100'],
+            'webhooks.*.event_types' => ['required', 'array'],
+            'webhooks.*.headers' => ['nullable', 'array'],
+            'webhooks.*.filter' => ['nullable', 'array'],
+            'created_by' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         // Only admins can reassign ownership
@@ -110,7 +110,7 @@ class ApplicationController extends Controller
 
         try {
             $result = $pusher->get('/channels');
-            $channels = array_keys((array) ($result->channels ?? new \stdClass()));
+            $channels = array_keys((array) ($result->channels ?? new \stdClass));
         } catch (\Throwable) {
             $channels = [];
         }
@@ -131,7 +131,7 @@ class ApplicationController extends Controller
         $this->authorizeOwnership($application);
 
         $application->update([
-            'enabled'    => ! $application->enabled,
+            'enabled' => ! $application->enabled,
             'updated_by' => auth()->id(),
         ]);
         $application->clearCache();
@@ -144,8 +144,8 @@ class ApplicationController extends Controller
         $query = Application::ownershipAware();
 
         return response()->json([
-            'total'    => (clone $query)->count(),
-            'active'   => (clone $query)->where('enabled', true)->count(),
+            'total' => (clone $query)->count(),
+            'active' => (clone $query)->where('enabled', true)->count(),
             'inactive' => (clone $query)->where('enabled', false)->count(),
         ]);
     }

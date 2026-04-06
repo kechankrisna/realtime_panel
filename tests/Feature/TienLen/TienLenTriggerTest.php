@@ -29,14 +29,14 @@ class TienLenTriggerTest extends TestCase
         $this->mockPusher();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/tienlen/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'TL001',
-                'type'           => 'play',
-                'payload'        => ['cards' => ['3H', '4D']],
+                'room_code' => 'TL001',
+                'type' => 'play',
+                'payload' => ['cards' => ['3H', '4D']],
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -52,44 +52,44 @@ class TienLenTriggerTest extends TestCase
         });
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/tienlen/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'TL001',
-                'type'           => 'deal',
-                'payload'        => ['round' => 1],
+                'room_code' => 'TL001',
+                'type' => 'deal',
+                'payload' => ['round' => 1],
             ]);
     }
 
     public function test_invalid_type_returns_422(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/tienlen/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'TL001',
-                'type'           => 'bad-type',
-                'payload'        => [],
+                'room_code' => 'TL001',
+                'type' => 'bad-type',
+                'payload' => [],
             ])
             ->assertUnprocessable();
     }
 
     public function test_non_owner_gets_404(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $other->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/tienlen/trigger', [
                 'application_id' => $app->id,
-                'room_code'      => 'TL001',
-                'type'           => 'seat',
-                'payload'        => ['seat' => 1],
+                'room_code' => 'TL001',
+                'type' => 'seat',
+                'payload' => ['seat' => 1],
             ])
             ->assertNotFound();
     }

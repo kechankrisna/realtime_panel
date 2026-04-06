@@ -29,15 +29,15 @@ class ChatTriggerTest extends TestCase
         $this->mockPusher();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chat/trigger', [
                 'application_id' => $app->id,
-                'channel'        => 'chat-room-1',
-                'data'           => [
-                    'id'      => 'msg-1',
-                    'sender'  => 'Alice',
+                'channel' => 'chat-room-1',
+                'data' => [
+                    'id' => 'msg-1',
+                    'sender' => 'Alice',
                     'content' => 'Hello!',
                 ],
             ])
@@ -55,41 +55,41 @@ class ChatTriggerTest extends TestCase
         });
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chat/trigger', [
                 'application_id' => $app->id,
-                'channel'        => 'chat-room-1',
-                'data'           => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
+                'channel' => 'chat-room-1',
+                'data' => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
             ]);
     }
 
     public function test_disabled_application_returns_404(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->disabled()->create(['created_by' => $user->id]);
+        $app = Application::factory()->disabled()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chat/trigger', [
                 'application_id' => $app->id,
-                'channel'        => 'chat-room-1',
-                'data'           => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
+                'channel' => 'chat-room-1',
+                'data' => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
             ])
             ->assertNotFound();
     }
 
     public function test_non_owner_gets_404(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $other->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chat/trigger', [
                 'application_id' => $app->id,
-                'channel'        => 'chat-room-1',
-                'data'           => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
+                'channel' => 'chat-room-1',
+                'data' => ['id' => 'x', 'sender' => 'Bob', 'content' => 'Hi'],
             ])
             ->assertNotFound();
     }
@@ -97,13 +97,13 @@ class ChatTriggerTest extends TestCase
     public function test_data_fields_are_required(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chat/trigger', [
                 'application_id' => $app->id,
-                'channel'        => 'chat-room-1',
-                'data'           => [],
+                'channel' => 'chat-room-1',
+                'data' => [],
             ])
             ->assertUnprocessable();
     }

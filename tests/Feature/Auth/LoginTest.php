@@ -15,7 +15,7 @@ class LoginTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('secret123')]);
 
         $response = $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'secret123',
         ]);
 
@@ -28,7 +28,7 @@ class LoginTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('secret123')]);
 
         $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'wrong-password',
         ])->assertUnprocessable();
     }
@@ -36,7 +36,7 @@ class LoginTest extends TestCase
     public function test_login_returns_422_for_unknown_email(): void
     {
         $this->postJson('/api/auth/login', [
-            'email'    => 'nobody@example.com',
+            'email' => 'nobody@example.com',
             'password' => 'password',
         ])->assertUnprocessable();
     }
@@ -46,7 +46,7 @@ class LoginTest extends TestCase
         $user = User::factory()->inactive()->create(['password' => bcrypt('secret123')]);
 
         $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'secret123',
         ])->assertUnprocessable();
     }

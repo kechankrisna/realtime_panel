@@ -20,7 +20,7 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -32,11 +32,11 @@ class UserController extends Controller
         $this->authorize('create', User::class);
 
         $data = $request->validate([
-            'name'      => ['required', 'string', 'max:100'],
-            'email'     => ['required', 'email', 'max:100', 'unique:users,email'],
-            'password'  => ['required', 'string', 'min:8', 'max:100'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:100', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'max:100'],
             'is_active' => ['boolean'],
-            'is_admin'  => ['boolean'],
+            'is_admin' => ['boolean'],
         ]);
 
         $data['created_by'] = auth()->id();
@@ -58,11 +58,11 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $data = $request->validate([
-            'name'      => ['required', 'string', 'max:100'],
-            'email'     => ['required', 'email', 'max:100', 'unique:users,email,'.$user->id],
-            'password'  => ['nullable', 'string', 'min:8', 'max:100'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:100', 'unique:users,email,'.$user->id],
+            'password' => ['nullable', 'string', 'min:8', 'max:100'],
             'is_active' => ['boolean'],
-            'is_admin'  => ['boolean'],
+            'is_admin' => ['boolean'],
         ]);
 
         if (empty($data['password'])) {

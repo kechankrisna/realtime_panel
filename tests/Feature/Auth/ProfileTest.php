@@ -18,7 +18,7 @@ class ProfileTest extends TestCase
             ->getJson('/api/auth/user')
             ->assertOk()
             ->assertJson([
-                'id'    => $user->id,
+                'id' => $user->id,
                 'email' => $user->email,
             ]);
     }
@@ -29,7 +29,7 @@ class ProfileTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->putJson('/api/auth/user', [
-                'name'  => 'New Name',
+                'name' => 'New Name',
                 'email' => 'new@example.com',
             ])
             ->assertOk()
@@ -42,14 +42,14 @@ class ProfileTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->putJson('/api/auth/user', [
-                'name'     => $user->name,
-                'email'    => $user->email,
+                'name' => $user->name,
+                'email' => $user->email,
                 'password' => 'new-password-123',
             ])
             ->assertOk();
 
         $this->postJson('/api/auth/login', [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'new-password-123',
         ])->assertOk();
     }
@@ -57,11 +57,11 @@ class ProfileTest extends TestCase
     public function test_email_must_be_unique_on_update(): void
     {
         $other = User::factory()->create(['email' => 'taken@example.com']);
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
             ->putJson('/api/auth/user', [
-                'name'  => $user->name,
+                'name' => $user->name,
                 'email' => 'taken@example.com',
             ])
             ->assertUnprocessable();

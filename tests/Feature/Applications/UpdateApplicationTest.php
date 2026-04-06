@@ -10,14 +10,14 @@ use Tests\TestCase;
 
 class UpdateApplicationTest extends TestCase
 {
-    use RefreshDatabase, MocksWebSocketServer;
+    use MocksWebSocketServer, RefreshDatabase;
 
     public function test_owner_can_update_application(): void
     {
         $this->mockWebSocketServer();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/applications/{$app->id}", [
@@ -29,9 +29,9 @@ class UpdateApplicationTest extends TestCase
 
     public function test_update_clears_cache(): void
     {
-        $spy  = $this->spyWebSocketServer();
+        $spy = $this->spyWebSocketServer();
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/applications/{$app->id}", ['name' => 'Changed']);
@@ -45,17 +45,17 @@ class UpdateApplicationTest extends TestCase
 
         $admin = User::factory()->admin()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $admin->id]);
+        $app = Application::factory()->create(['created_by' => $admin->id]);
 
         $this->actingAs($admin, 'sanctum')
             ->putJson("/api/applications/{$app->id}", [
-                'name'       => $app->name,
+                'name' => $app->name,
                 'created_by' => $other->id,
             ])
             ->assertOk();
 
         $this->assertDatabaseHas('applications', [
-            'id'         => $app->id,
+            'id' => $app->id,
             'created_by' => $other->id,
         ]);
     }
@@ -64,29 +64,29 @@ class UpdateApplicationTest extends TestCase
     {
         $this->mockWebSocketServer();
 
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/applications/{$app->id}", [
-                'name'       => $app->name,
+                'name' => $app->name,
                 'created_by' => $other->id,
             ])
             ->assertOk();
 
         // created_by should not have changed
         $this->assertDatabaseHas('applications', [
-            'id'         => $app->id,
+            'id' => $app->id,
             'created_by' => $user->id,
         ]);
     }
 
     public function test_non_owner_gets_403(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $other = User::factory()->create();
-        $app   = Application::factory()->create(['created_by' => $other->id]);
+        $app = Application::factory()->create(['created_by' => $other->id]);
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/applications/{$app->id}", ['name' => 'Hack'])
@@ -98,7 +98,7 @@ class UpdateApplicationTest extends TestCase
         $this->mockWebSocketServer();
 
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id]);
+        $app = Application::factory()->create(['created_by' => $user->id]);
 
         // Updating with its own name should succeed
         $this->actingAs($user, 'sanctum')

@@ -16,7 +16,7 @@ class CreateApplicationTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/applications', [
-                'name'    => 'My App',
+                'name' => 'My App',
                 'enabled' => true,
             ]);
 
@@ -24,7 +24,7 @@ class CreateApplicationTest extends TestCase
             ->assertJsonStructure(['id', 'key', 'secret', 'name', 'enabled']);
 
         $this->assertDatabaseHas('applications', [
-            'name'       => 'My App',
+            'name' => 'My App',
             'created_by' => $user->id,
         ]);
     }
@@ -35,7 +35,7 @@ class CreateApplicationTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/applications', [
-                'name'    => 'Auto Keys',
+                'name' => 'Auto Keys',
                 'enabled' => true,
             ]);
 
@@ -49,13 +49,13 @@ class CreateApplicationTest extends TestCase
         $user = User::factory()->create();
 
         \App\Models\Application::factory()->create([
-            'name'       => 'Duplicate',
+            'name' => 'Duplicate',
             'created_by' => $user->id,
         ]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/applications', [
-                'name'    => 'Duplicate',
+                'name' => 'Duplicate',
                 'enabled' => true,
             ])
             ->assertUnprocessable();
@@ -73,7 +73,7 @@ class CreateApplicationTest extends TestCase
     public function test_unauthenticated_cannot_create(): void
     {
         $this->postJson('/api/applications', [
-            'name'    => 'Test',
+            'name' => 'Test',
             'enabled' => true,
         ])->assertUnauthorized();
     }

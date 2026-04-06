@@ -16,11 +16,11 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($admin, 'sanctum')
             ->postJson('/api/users', [
-                'name'      => 'New User',
-                'email'     => 'newuser@example.com',
-                'password'  => 'password123',
+                'name' => 'New User',
+                'email' => 'newuser@example.com',
+                'password' => 'password123',
                 'is_active' => true,
-                'is_admin'  => false,
+                'is_admin' => false,
             ])
             ->assertCreated()
             ->assertJsonStructure(['id', 'name', 'email']);
@@ -34,8 +34,8 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/users', [
-                'name'     => 'Hacker',
-                'email'    => 'hack@example.com',
+                'name' => 'Hacker',
+                'email' => 'hack@example.com',
                 'password' => 'password123',
             ])
             ->assertForbidden();
@@ -48,8 +48,8 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($admin, 'sanctum')
             ->postJson('/api/users', [
-                'name'     => 'Duplicate',
-                'email'    => 'taken@example.com',
+                'name' => 'Duplicate',
+                'email' => 'taken@example.com',
                 'password' => 'password123',
             ])
             ->assertUnprocessable();
@@ -61,7 +61,7 @@ class CreateUserTest extends TestCase
 
         $this->actingAs($admin, 'sanctum')
             ->postJson('/api/users', [
-                'name'  => 'No Pass',
+                'name' => 'No Pass',
                 'email' => 'nopass@example.com',
             ])
             ->assertUnprocessable();

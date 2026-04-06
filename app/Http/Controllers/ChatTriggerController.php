@@ -14,11 +14,11 @@ class ChatTriggerController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'channel'        => ['required', 'string', 'max:100'],
-            'data'           => ['required', 'array'],
-            'data.id'        => ['required', 'string'],
-            'data.sender'    => ['required', 'string', 'max:200'],
-            'data.content'   => ['required', 'string', 'max:5000'],
+            'channel' => ['required', 'string', 'max:100'],
+            'data' => ['required', 'array'],
+            'data.id' => ['required', 'string'],
+            'data.sender' => ['required', 'string', 'max:200'],
+            'data.content' => ['required', 'string', 'max:5000'],
         ]);
 
         // Enforce ownership — user can only trigger events for their own apps

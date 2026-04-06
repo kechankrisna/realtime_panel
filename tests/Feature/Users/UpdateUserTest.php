@@ -12,12 +12,12 @@ class UpdateUserTest extends TestCase
 
     public function test_admin_can_update_user(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $target = User::factory()->create();
 
         $this->actingAs($admin, 'sanctum')
             ->putJson("/api/users/{$target->id}", [
-                'name'  => 'Updated',
+                'name' => 'Updated',
                 'email' => 'updated@example.com',
             ])
             ->assertOk()
@@ -26,12 +26,12 @@ class UpdateUserTest extends TestCase
 
     public function test_non_admin_cannot_update_other_user(): void
     {
-        $user   = User::factory()->create();
+        $user = User::factory()->create();
         $target = User::factory()->create();
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/users/{$target->id}", [
-                'name'  => 'Hack',
+                'name' => 'Hack',
                 'email' => $target->email,
             ])
             ->assertForbidden();
@@ -39,13 +39,13 @@ class UpdateUserTest extends TestCase
 
     public function test_admin_can_update_password(): void
     {
-        $admin  = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
         $target = User::factory()->create();
 
         $this->actingAs($admin, 'sanctum')
             ->putJson("/api/users/{$target->id}", [
-                'name'     => $target->name,
-                'email'    => $target->email,
+                'name' => $target->name,
+                'email' => $target->email,
                 'password' => 'new-password-456',
             ])
             ->assertOk();
@@ -57,8 +57,8 @@ class UpdateUserTest extends TestCase
 
         $this->actingAs($admin, 'sanctum')
             ->putJson("/api/users/{$admin->id}", [
-                'name'      => $admin->name,
-                'email'     => $admin->email,
+                'name' => $admin->name,
+                'email' => $admin->email,
                 'is_active' => false,
             ])
             ->assertOk();

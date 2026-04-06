@@ -14,11 +14,11 @@ class ChatController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'channel'        => ['required', 'string', 'max:100'],
-            'data'           => ['required', 'array'],
-            'data.id'        => ['required', 'string'],
-            'data.sender'    => ['required', 'string', 'max:200'],
-            'data.content'   => ['required', 'string', 'max:5000'],
+            'channel' => ['required', 'string', 'max:100'],
+            'data' => ['required', 'array'],
+            'data.id' => ['required', 'string'],
+            'data.sender' => ['required', 'string', 'max:200'],
+            'data.content' => ['required', 'string', 'max:5000'],
         ]);
 
         $app = Application::ownershipAware()
@@ -36,10 +36,10 @@ class ChatController extends Controller
 
         $pusher->trigger($validated['channel'], 'message', $validated['data']);
 
-        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+        $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
             'channel' => $validated['channel'],
-            'event'   => 'message',
-            'data'    => $validated['data'],
+            'event' => 'message',
+            'data' => $validated['data'],
         ]);
 
         return response()->json(['ok' => true]);

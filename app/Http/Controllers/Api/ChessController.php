@@ -7,8 +7,8 @@ use App\Models\Application;
 use App\Services\PusherService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ChessController extends Controller
 {
@@ -19,7 +19,7 @@ class ChessController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:10'],
+            'room_code' => ['required', 'string', 'max:10'],
         ]);
 
         Application::ownershipAware()
@@ -27,11 +27,11 @@ class ChessController extends Controller
             ->findOrFail($validated['application_id']);
 
         Cache::put(
-            'chess_room_' . $validated['room_code'],
+            'chess_room_'.$validated['room_code'],
             [
-                'status'         => 'waiting',
+                'status' => 'waiting',
                 'application_id' => $validated['application_id'],
-                'creator_id'     => Auth::id(),
+                'creator_id' => Auth::id(),
             ],
             now()->addMinutes(90)
         );
@@ -46,13 +46,13 @@ class ChessController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:10'],
+            'room_code' => ['required', 'string', 'max:10'],
         ]);
 
-        $key  = 'chess_room_' . $validated['room_code'];
+        $key = 'chess_room_'.$validated['room_code'];
         $room = Cache::get($key);
 
-        if (!$room) {
+        if (! $room) {
             return response()->json(['message' => 'Room not found.'], 404);
         }
 
@@ -76,9 +76,9 @@ class ChessController extends Controller
     {
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
-            'room_code'      => ['required', 'string', 'max:50'],
-            'type'           => ['required', 'string', 'in:move,join,resign'],
-            'payload'        => ['required', 'array'],
+            'room_code' => ['required', 'string', 'max:50'],
+            'type' => ['required', 'string', 'in:move,join,resign'],
+            'payload' => ['required', 'array'],
         ]);
 
         $app = Application::ownershipAware()
@@ -95,15 +95,15 @@ class ChessController extends Controller
         );
 
         $payload = array_merge(['type' => $validated['type']], $validated['payload']);
-        $channel = 'chess-' . $validated['room_code'];
+        $channel = 'chess-'.$validated['room_code'];
 
         $pusher->trigger($channel, 'chess-event', $payload);
 
         // Relay to dedicated monitor channel.
-        $pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+        $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
             'channel' => $channel,
-            'event'   => 'chess-event',
-            'data'    => $payload,
+            'event' => 'chess-event',
+            'data' => $payload,
         ]);
 
         return response()->json(['ok' => true]);

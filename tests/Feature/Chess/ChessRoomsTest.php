@@ -15,12 +15,12 @@ class ChessRoomsTest extends TestCase
     public function test_owner_can_create_chess_room(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/rooms', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM01',
+                'room_code' => 'ROOM01',
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -33,18 +33,18 @@ class ChessRoomsTest extends TestCase
     public function test_second_player_can_join_waiting_room(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         Cache::put('chess_room_ROOM02', [
-            'status'         => 'waiting',
+            'status' => 'waiting',
             'application_id' => $app->id,
-            'creator_id'     => $user->id,
+            'creator_id' => $user->id,
         ], now()->addMinutes(90));
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/rooms/join', [
                 'application_id' => $app->id,
-                'room_code'      => 'ROOM02',
+                'room_code' => 'ROOM02',
             ])
             ->assertOk()
             ->assertJson(['ok' => true]);
@@ -55,18 +55,18 @@ class ChessRoomsTest extends TestCase
     public function test_join_full_room_returns_409(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         Cache::put('chess_room_FULL01', [
-            'status'         => 'playing',
+            'status' => 'playing',
             'application_id' => $app->id,
-            'creator_id'     => $user->id,
+            'creator_id' => $user->id,
         ], now()->addMinutes(90));
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/rooms/join', [
                 'application_id' => $app->id,
-                'room_code'      => 'FULL01',
+                'room_code' => 'FULL01',
             ])
             ->assertStatus(409);
     }
@@ -74,32 +74,32 @@ class ChessRoomsTest extends TestCase
     public function test_join_nonexistent_room_returns_404(): void
     {
         $user = User::factory()->create();
-        $app  = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/rooms/join', [
                 'application_id' => $app->id,
-                'room_code'      => 'NOROOM',
+                'room_code' => 'NOROOM',
             ])
             ->assertNotFound();
     }
 
     public function test_join_with_wrong_app_returns_422(): void
     {
-        $user    = User::factory()->create();
-        $app     = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
+        $user = User::factory()->create();
+        $app = Application::factory()->create(['created_by' => $user->id, 'enabled' => true]);
         $wrongId = 99999;
 
         Cache::put('chess_room_WRONG1', [
-            'status'         => 'waiting',
+            'status' => 'waiting',
             'application_id' => $app->id,
-            'creator_id'     => $user->id,
+            'creator_id' => $user->id,
         ], now()->addMinutes(90));
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/chess/rooms/join', [
                 'application_id' => $wrongId,
-                'room_code'      => 'WRONG1',
+                'room_code' => 'WRONG1',
             ])
             ->assertStatus(422);
     }

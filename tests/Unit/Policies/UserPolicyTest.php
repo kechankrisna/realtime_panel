@@ -13,7 +13,7 @@ class UserPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new UserPolicy();
+        $this->policy = new UserPolicy;
     }
 
     public function test_admin_can_view_any(): void

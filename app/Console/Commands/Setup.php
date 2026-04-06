@@ -19,11 +19,13 @@ class Setup extends Command
         $this->info('► Generating application key...');
         // Read .env file directly — config() may reflect a stale/cached value
         // if another process (e.g. start-server.sh) already wrote the key.
-        $envContent = file_get_contents(base_path('.env'));
-        if (! preg_match('/^APP_KEY=\S+/m', $envContent)) {
-            $this->call('key:generate');
-        } else {
+        $envPath = base_path('.env');
+        if (! file_exists($envPath)) {
+            $this->line('  No .env file found — skipping key generation.');
+        } elseif (preg_match('/^APP_KEY=\S+/m', file_get_contents($envPath))) {
             $this->line('  Application key already set, skipping.');
+        } else {
+            $this->call('key:generate');
         }
 
         $this->newLine();

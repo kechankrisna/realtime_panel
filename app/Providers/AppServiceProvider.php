@@ -6,8 +6,11 @@ use App\Contracts\WebSocketServerContract;
 use App\Mixins\BluePrintMixins;
 use App\Services\PusherService;
 use App\Services\WebSocket\SoketiDriver;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,5 +30,9 @@ class AppServiceProvider extends ServiceProvider
         Model::unguard();
 
         Blueprint::mixin(new BluePrintMixins);
+
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

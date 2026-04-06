@@ -15,10 +15,4 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
-    test: {
-        globals: true,
-        environment: 'jsdom',
-        setupFiles: ['resources/js/tests/setup.js'],
-        include: ['resources/js/tests/**/*.test.{js,jsx}'],
-    },
 });

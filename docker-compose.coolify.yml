@@ -6,7 +6,7 @@
 
 services:
     realtime-panel:
-        image: ghcr.io/kechankrisna/soketi-apps-alpine:latest
+        image: ghcr.io/kechankrisna/realtime-panel-alpine:latest
         environment:
             - SERVICE_FQDN_REALTIMEPANEL_8080
             - AUTORUN_ENABLED=true

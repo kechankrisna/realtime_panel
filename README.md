@@ -140,8 +140,9 @@ Password: password
 
 > **macOS prerequisite:** Homebrew PHP does not bundle the Redis extension. Install it before running `composer install`:
 > ```bash
-> pecl install redis
+> printf "no\nno\nno\n" | pecl install redis
 > ```
+> The three `no` answers skip optional igbinary/lzf/zstd prompts that would otherwise hang the installer.
 > Verify with: `php -r "echo extension_loaded('redis') ? 'redis ok' : 'redis missing';"`
 
 **1. Clone the repo**

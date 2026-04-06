@@ -87,25 +87,32 @@ Full light / dark / system theme support persisted to `localStorage`.
 
 - Docker & Docker Compose (recommended) **or**
 - PHP 8.3+, Composer 2, Node.js 20+ (LTS), MySQL 8 / PostgreSQL 13+, Redis 6+
+- Required PHP extensions: `ext-redis`, `ext-pdo`, `ext-mbstring`, `ext-openssl`, `ext-tokenizer`, `ext-xml`, `ext-ctype`, `ext-json`
 - A running Soketi instance configured with MySQL/PostgreSQL app manager and Redis caching
 
 ---
 
 ## Quick Start with Docker
 
+**1. Clone the repository**
 ```bash
-# 1. Clone the repository
 git clone https://github.com/kechankrisna/realtime_panel.git
 cd realtime_panel
+```
 
-# 2. Copy the environment file and configure your values
+**2. Copy the environment file**
+```bash
 cp .env.example .env
-# Edit .env — set DB_*, REDIS_*, SUPER_USER_*, and SOKETI_* variables
+```
+Open `.env` and set `DB_*`, `REDIS_*`, `SUPER_USER_*`, and `SOKETI_*` variables.
 
-# 3. Build and start all services
+**3. Build and start all services**
+```bash
 docker compose up -d --build
+```
 
-# 4. Run full setup (migrations + storage link + cache clear + create super admin)
+**4. Run full setup** (generates app key, runs migrations, links storage, creates super admin)
+```bash
 docker compose exec realtime-panel php artisan app:setup
 ```
 
@@ -131,38 +138,57 @@ Password: password
 
 ## Manual Installation (without Docker)
 
+> **macOS prerequisite:** Homebrew PHP does not bundle the Redis extension. Install it before running `composer install`:
+> ```bash
+> pecl install redis
+> ```
+> Verify with: `php -r "echo extension_loaded('redis') ? 'redis ok' : 'redis missing';"`
+
+**1. Clone the repo**
 ```bash
-# 1. Clone the repo
 git clone https://github.com/kechankrisna/realtime_panel.git
 cd realtime_panel
+```
 
-# 2. Install PHP dependencies
+**2. Install PHP dependencies**
+```bash
 composer install
+```
 
-# 3. Install JS dependencies
+**3. Install JS dependencies**
+```bash
 npm install
+```
 
-# 4. Copy and configure environment
+**4. Copy and configure environment**
+```bash
 cp .env.example .env
-# Edit .env — set APP_URL, DB_*, REDIS_*, SUPER_USER_*, PUSHER_*, and SOKETI_* variables
+```
+Open `.env` and set `APP_URL`, `DB_*`, `REDIS_*`, `SUPER_USER_*`, `PUSHER_*`, and `SOKETI_*` variables.
 
-# 5. Run full setup (key:generate + migrate + storage:link + cache:clear + create super admin)
+**5. Run full setup** (generates app key, runs migrations, links storage, clears cache, creates super admin)
+```bash
 php artisan app:setup
+```
 
-# 6. Build frontend assets
+**6. Build frontend assets**
+```bash
 npm run build
+```
 
-# 7. Start the development server
+**7. Start the development server**
+```bash
 php artisan serve
 ```
 
 To run the Soketi WebSocket server alongside the app:
 
+**Install Soketi globally** (first time only)
 ```bash
-# Install Soketi globally
 npm install -g @soketi/soketi
-
-# Start Soketi (reads config from .env SOKETI_* variables)
+```
+**Start Soketi** (reads config from `.env` `SOKETI_*` variables)
+```bash
 soketi start
 ```
 
@@ -176,20 +202,26 @@ soketi start
 - Nginx proxies WebSocket connections — no need to expose Soketi port `6001` directly. Use `APP_PORT` for all traffic.
 - Set `SUPER_USER_EMAIL` and `SUPER_USER_PASSWORD` in `.env` before running `app:setup` to control the initial admin credentials.
 
+**1. Clone the repo**
 ```bash
-# 1. Clone or download the repo
 git clone https://github.com/kechankrisna/realtime_panel.git
 cd realtime_panel
+```
 
-# 2. Copy and configure the environment file
+**2. Copy and configure the environment file**
+```bash
 cp .env.example .env
-nano .env  # set APP_PORT, DB_*, REDIS_*, SUPER_USER_*, SOKETI_* variables
+```
+Edit `.env` — set `APP_PORT`, `DB_*`, `REDIS_*`, `SUPER_USER_*`, and `SOKETI_*` variables.
 
-# 3. Build and start all containers
+**3. Build and start all containers**
+```bash
 docker compose up -d --build
+```
 
-# 4. Run full setup inside the container
-#    This will: generate app key → migrate DB → link storage → clear cache → create super admin
+**4. Run full setup inside the container**
+(generates app key → runs migrations → links storage → clears cache → creates super admin)
+```bash
 docker compose exec realtime-panel php artisan app:setup
 ```
 

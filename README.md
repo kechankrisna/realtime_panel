@@ -1,15 +1,16 @@
 # RealtimePanel
 
 > Self-hosted WebSocket management dashboard for Soketi, Laravel Reverb, and any Pusher-compatible server.
-> Built with Laravel 10, React 19, and shadcn/ui.
+> Built with Laravel 12, React 19, and shadcn/ui.
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
-[![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777BB4)](https://php.net)
-[![Laravel 10](https://img.shields.io/badge/Laravel-10-FF2D20)](https://laravel.com)
+[![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4)](https://php.net)
+[![Laravel 12](https://img.shields.io/badge/Laravel-12-FF2D20)](https://laravel.com)
+[![CI](https://github.com/kechankrisna/realtimepanel/actions/workflows/ci.yml/badge.svg)](https://github.com/kechankrisna/realtimepanel/actions/workflows/ci.yml)
 
 **Keywords:** WebSocket dashboard · Soketi manager · Laravel Reverb admin · self-hosted Pusher alternative · realtime server management · Laravel WebSocket panel
 
-A full-featured management dashboard for [Soketi](https://soketi.app/) — the open-source, self-hosted WebSocket server. Built with **Laravel 10**, **React 19**, **shadcn/ui**, and **TanStack Router/Query**.
+A full-featured management dashboard for [Soketi](https://soketi.app/) — the open-source, self-hosted WebSocket server. Built with **Laravel 12**, **React 19**, **shadcn/ui**, and **TanStack Router/Query**.
 
 ![Dashboard](screenshots/dashboard.png)
 
@@ -69,7 +70,7 @@ Full light / dark / system theme support persisted to `localStorage`.
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Laravel 10, PHP 8.1+, Laravel Sanctum, Pusher PHP Server SDK |
+| Backend | Laravel 12, PHP 8.3+, Laravel Sanctum 4, Pusher PHP Server SDK |
 | Frontend | React 19, TanStack Router v1, TanStack Query v5, TanStack Table v8 |
 | UI | shadcn/ui, Tailwind CSS 3, Radix UI, Lucide React |
 | WebSockets | Soketi, Laravel Echo, pusher-js 8 |
@@ -77,14 +78,15 @@ Full light / dark / system theme support persisted to `localStorage`.
 | Cache / Queue | Redis 7 |
 | Build | Vite 5 |
 | Runtime | Node.js 20+ (LTS) |
-| Testing | PHPUnit, Vitest, Playwright |
+| CI | GitHub Actions (PHP tests, Vitest, Pint) |
+| Testing | PHPUnit 11, Vitest, Playwright |
 
 ---
 
 ## Requirements
 
 - Docker & Docker Compose (recommended) **or**
-- PHP 8.1+, Composer 2, Node.js 20+ (LTS), MySQL 8 / PostgreSQL 13+, Redis 6+
+- PHP 8.3+, Composer 2, Node.js 20+ (LTS), MySQL 8 / PostgreSQL 13+, Redis 6+
 - A running Soketi instance configured with MySQL/PostgreSQL app manager and Redis caching
 
 ---
@@ -279,7 +281,7 @@ npm run dev
 # Build for production
 npm run build
 
-# Run PHP unit & feature tests (SQLite in-memory, no Docker required)
+# Run PHP unit & feature tests (PHPUnit 11 + SQLite in-memory, no Docker required)
 php artisan test
 
 # Run frontend tests (Vitest + jsdom)

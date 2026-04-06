@@ -46,7 +46,7 @@ export function AppLayout({ children }) {
                                 Soketi Docs ↗
                             </a>
                             <a
-                                href="https://github.com/kechankrisna/realtimepanel"
+                                href="https://github.com/kechankrisna/realtime_panel"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-foreground transition-colors"

@@ -4,7 +4,7 @@
 FROM serversideup/php:8.3-fpm-nginx-alpine
 
 LABEL org.opencontainers.image.authors="Ke Chankrisna <ke.chankrisna168@gmail.com>"
-LABEL org.opencontainers.image.source=https://github.com/kechankrisna/realtimepanel
+LABEL org.opencontainers.image.source=https://github.com/kechankrisna/realtime_panel
 LABEL org.opencontainers.image.description="Self-hosted WebSocket management dashboard for Soketi, Laravel Reverb, and any Pusher-compatible server."
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

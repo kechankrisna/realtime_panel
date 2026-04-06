@@ -6,7 +6,7 @@
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4)](https://php.net)
 [![Laravel 12](https://img.shields.io/badge/Laravel-12-FF2D20)](https://laravel.com)
-[![CI](https://github.com/kechankrisna/realtimepanel/actions/workflows/ci.yml/badge.svg)](https://github.com/kechankrisna/realtimepanel/actions/workflows/ci.yml)
+[![CI](https://github.com/kechankrisna/realtime_panel/actions/workflows/ci.yml/badge.svg)](https://github.com/kechankrisna/realtime_panel/actions/workflows/ci.yml)
 
 **Keywords:** WebSocket dashboard · Soketi manager · Laravel Reverb admin · self-hosted Pusher alternative · realtime server management · Laravel WebSocket panel
 
@@ -95,8 +95,8 @@ Full light / dark / system theme support persisted to `localStorage`.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/kechankrisna/realtimepanel.git
-cd realtimepanel
+git clone https://github.com/kechankrisna/realtime_panel.git
+cd realtime_panel
 
 # 2. Copy the environment file and configure your values
 cp .env.example .env
@@ -133,8 +133,8 @@ Password: password
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/kechankrisna/realtimepanel.git
-cd realtimepanel
+git clone https://github.com/kechankrisna/realtime_panel.git
+cd realtime_panel
 
 # 2. Install PHP dependencies
 composer install
@@ -178,8 +178,8 @@ soketi start
 
 ```bash
 # 1. Clone or download the repo
-git clone https://github.com/kechankrisna/realtimepanel.git
-cd realtimepanel
+git clone https://github.com/kechankrisna/realtime_panel.git
+cd realtime_panel
 
 # 2. Copy and configure the environment file
 cp .env.example .env

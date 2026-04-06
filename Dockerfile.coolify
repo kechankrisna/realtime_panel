@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y git nano curl \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Clone the repository
-RUN git clone https://github.com/kechankrisna/realtimepanel /var/www/html
+RUN git clone https://github.com/kechankrisna/realtime_panel /var/www/html
 
 # Set appropriate permission
 RUN chown -R www-data:www-data /var/www/html

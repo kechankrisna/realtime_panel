@@ -5,15 +5,15 @@
 # port: 8080
 
 services:
-    soketi-apps:
+    realtime-panel:
         image: ghcr.io/kechankrisna/soketi-apps-alpine:latest
         environment:
-            - SERVICE_FQDN_SOKETIAPPMANAGER_8080
+            - SERVICE_FQDN_REALTIMEPANEL_8080
             - AUTORUN_ENABLED=true
             - AUTORUN_LARAVEL_MIGRATION=${AUTORUN_LARAVEL_MIGRATION:-true}
             - AUTORUN_LARAVEL_MIGRATION_SEED=${AUTORUN_LARAVEL_SEED:-true}
             - APP_DEBUG=${APP_DEBUG:-false}
-            - APP_URL=$SERVICE_FQDN_SOKETIAPPMANAGER
+            - APP_URL=$SERVICE_FQDN_REALTIMEPANEL
             - APP_KEY=$APP_KEY
             - DB_CONNECTION=$DB_CONNECTION # `mysql` or `pgsql`
             - DB_HOST=$DB_HOST # Paste from Coolify

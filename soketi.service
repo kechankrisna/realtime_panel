@@ -8,7 +8,7 @@ Restart=on-failure
 User=www-data
 Group=www-data
 Environment=HOME=/home/<username>
-WorkingDirectory=/var/www/soketi-apps
+WorkingDirectory=/var/www/realtime-panel
 ExecStart=soketi start --config=soketi.json
 RestartSec=60s
 KillSignal=SIGINT

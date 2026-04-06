@@ -104,18 +104,18 @@ cp .env.example .env
 docker compose up -d --build
 
 # 4. Run full setup (migrations + storage link + cache clear + create super admin)
-docker compose exec soketi-apps php artisan app:setup
+docker compose exec realtime-panel php artisan app:setup
 ```
 
 The stack spins up five containers:
 
 | Container | Role | Port |
 |-----------|------|------|
-| `soketi-apps` | Laravel + PHP-FPM | — |
-| `soketi-apps-nginx` | Nginx reverse proxy | `80` (configurable via `APP_PORT`) |
-| `soketi-websocket-server` | Soketi WebSocket server | `6001` (internal) |
-| `soketi-apps-mysql` | MySQL 8 database | — (internal) |
-| `soketi-apps-redis` | Redis 7 cache / queue | — (internal) |
+| `realtime-panel` | Laravel + PHP-FPM | — |
+| `realtime-panel-nginx` | Nginx reverse proxy | `80` (configurable via `APP_PORT`) |
+| `realtime-websocket-server` | Soketi WebSocket server | `6001` (internal) |
+| `realtime-panel-mysql` | MySQL 8 database | — (internal) |
+| `realtime-panel-redis` | Redis 7 cache / queue | — (internal) |
 
 Open **http://localhost** in your browser.
 
@@ -188,7 +188,7 @@ docker compose up -d --build
 
 # 4. Run full setup inside the container
 #    This will: generate app key → migrate DB → link storage → clear cache → create super admin
-docker compose exec soketi-apps php artisan app:setup
+docker compose exec realtime-panel php artisan app:setup
 ```
 
 Open **http://localhost** (or the port configured in `APP_PORT`) in your browser.
@@ -202,7 +202,7 @@ SUPER_USER_PASSWORD="password"
 
 To update the admin's details after deployment, run:
 ```bash
-docker compose exec soketi-apps php artisan app:update-admin
+docker compose exec realtime-panel php artisan app:update-admin
 ```
 
 ---
@@ -224,7 +224,7 @@ SUPER_USER_PASSWORD="password"
 DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
-DB_DATABASE=soketi_apps
+DB_DATABASE=realtime_panel
 DB_USERNAME=soketi
 DB_PASSWORD=password
 
@@ -245,7 +245,7 @@ SOKETI_DB_MYSQL_HOST=mysql
 SOKETI_DB_MYSQL_PORT=3306
 SOKETI_DB_MYSQL_USERNAME=soketi
 SOKETI_DB_MYSQL_PASSWORD=password
-SOKETI_DB_MYSQL_DATABASE=soketi_apps
+SOKETI_DB_MYSQL_DATABASE=realtime_panel
 SOKETI_DB_REDIS_HOST=redis
 SOKETI_DB_REDIS_PASSWORD=password
 SOKETI_METRICS_ENABLED=true

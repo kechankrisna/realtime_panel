@@ -363,6 +363,7 @@ export default function TienLenPage() {
     const [roomInput, setRoomInput] = useState('');
     const [seats, setSeats]       = useState(1); // how many seats filled
     const [mySeat, setMySeat]     = useState(0); // 0–3
+    const [maxPlayers, setMaxPlayers] = useState(4); // human seats (2|3|4)
     const [connected, setConnected] = useState(false);
     const [joinError, setJoinError] = useState('');
     const [copied, setCopied]     = useState(false);
@@ -380,6 +381,9 @@ export default function TienLenPage() {
     const [playError, setPlayError]   = useState('');
     const [isVsBot, setIsVsBot]       = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
+
+    // Derived: seat indices that will be filled by bots
+    const botSeats = Array.from({ length: 4 - maxPlayers }, (_, i) => maxPlayers + i);
     const [firstTurn, setFirstTurn]   = useState(true); // flag for 3♠ enforcement
     const [lastPlay, setLastPlay]     = useState(null); // for display ("Player X played …")
 
@@ -432,6 +436,42 @@ export default function TienLenPage() {
         return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [turn, isVsBot, gameStarted, hands, table, winners]);
+
+    // ---------------------------------------------------------------------------
+    // Bot turn effect — multiplayer mode, creator drives bot seats via WebSocket
+    // ---------------------------------------------------------------------------
+    useEffect(() => {
+        if (isVsBot || !gameStarted || mySeat !== 0) return;
+        if (botSeats.length === 0 || !botSeats.includes(turn)) return;
+        if (winners.includes(turn)) return;
+
+        const startSeat = findStartSeat(hands);
+        const delay = 700 + Math.random() * 600;
+        const timer = setTimeout(() => {
+            const botHand = hands[turn];
+            if (!botHand || !botHand.length) return;
+            const play = botMove(botHand, table, firstTurn && turn === startSeat);
+            if (play) {
+                tlTrigger.mutate({
+                    application_id: Number(appId),
+                    room_code: roomCode,
+                    type: 'play',
+                    payload: { seat: turn, play },
+                });
+                applyPlay(turn, play);
+            } else {
+                tlTrigger.mutate({
+                    application_id: Number(appId),
+                    room_code: roomCode,
+                    type: 'pass',
+                    payload: { seat: turn },
+                });
+                applyPass(turn);
+            }
+        }, delay);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [turn, isVsBot, gameStarted, mySeat, maxPlayers, hands, table, winners, firstTurn]);
 
     // ---------------------------------------------------------------------------
     // Game logic helpers
@@ -545,7 +585,7 @@ export default function TienLenPage() {
     const createRoom = () => {
         const code = generateRoomCode();
         registerRoom.mutate(
-            { application_id: Number(appId), room_code: code },
+            { application_id: Number(appId), room_code: code, max_players: maxPlayers },
             {
                 onSuccess: () => {
                     setRoomCode(code);
@@ -574,6 +614,7 @@ export default function TienLenPage() {
                     setRoomCode(code);
                     setMySeat(mySeatIdx);
                     setSeats(data.seats);
+                    setMaxPlayers(data.max_players ?? 4);
                     setIsVsBot(false);
                     if (data.full) {
                         setScreen('lobby'); // still show lobby until deal event
@@ -673,18 +714,23 @@ export default function TienLenPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Creator deals when room fills to 4
+    // Creator deals when human seats fill up; bots backfill the rest
     useEffect(() => {
-        if (isVsBot || mySeat !== 0 || seats < 4 || gameStarted) return;
+        if (isVsBot || mySeat !== 0 || seats < maxPlayers || gameStarted) return;
         const dealtHands = deal();
         const startSeat  = findStartSeat(dealtHands);
-        // Each player's payload only includes their own cards
-        const handsPayload = dealtHands.map((h, i) =>
-            Array.from({ length: 4 }, (_, seat) => seat === i ? h : null)
-        );
-        // Broadcast each player's hand separately
-        dealtHands.forEach((hand, seat) => {
-            const payload = { hands: dealtHands.map((h, i) => i === seat ? h : null), turn: startSeat };
+        // Announce bot seats so all players see their names
+        botSeats.forEach((s, i) => {
+            tlTrigger.mutate({
+                application_id: Number(appId),
+                room_code: roomCode,
+                type: 'seat',
+                payload: { seat: s, name: `Bot ${i + 1}` },
+            });
+        });
+        // Broadcast each human player's hand separately (bots are local-only)
+        dealtHands.slice(0, maxPlayers).forEach((_hand, humanIdx) => {
+            const payload = { hands: dealtHands.map((h, i) => i === humanIdx ? h : null), turn: startSeat };
             tlTrigger.mutate({
                 application_id: Number(appId),
                 room_code: roomCode,
@@ -692,7 +738,7 @@ export default function TienLenPage() {
                 payload,
             });
         });
-        // Apply locally for seat 0 (creator)
+        // Apply ALL 4 hands locally — creator drives bot turns
         setHands(dealtHands);
         setTurn(startSeat);
         setTable(null);
@@ -704,7 +750,7 @@ export default function TienLenPage() {
         setGameStarted(true);
         setScreen('game');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [seats]);
+    }, [seats, maxPlayers]);
 
     // ---------------------------------------------------------------------------
     // Human play / pass
@@ -780,6 +826,7 @@ export default function TienLenPage() {
         setFirstTurn(true);
         setLastPlay(null);
         setSeats(1);
+        setMaxPlayers(4);
         setPlayerNames(['', '', '', '']);
     };
 
@@ -853,7 +900,7 @@ export default function TienLenPage() {
                             </div>
                             <div>
                                 <h2 className="font-bold text-base text-white">Create Room</h2>
-                                <p className="text-sm text-emerald-300/50 mt-1">Host a 4-player room. Share the code with friends.</p>
+                                <p className="text-sm text-emerald-300/50 mt-1">Host a room and invite friends. Bots fill any empty seats.</p>
                             </div>
                             <div className="space-y-1.5">
                                 <Label className="text-xs text-emerald-300/60">Soketi Application</Label>
@@ -865,6 +912,19 @@ export default function TienLenPage() {
                                         {apps.map((a) => (
                                             <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
                                         ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs text-emerald-300/60">Human Players</Label>
+                                <Select value={String(maxPlayers)} onValueChange={(v) => setMaxPlayers(Number(v))}>
+                                    <SelectTrigger className="bg-black/30 border-emerald-700/30 text-emerald-100 text-sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="2">2 humans + 2 bots</SelectItem>
+                                        <SelectItem value="3">3 humans + 1 bot</SelectItem>
+                                        <SelectItem value="4">4 humans (no bots)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -889,7 +949,7 @@ export default function TienLenPage() {
                             </div>
                             <div>
                                 <h2 className="font-bold text-base text-white">Join Room</h2>
-                                <p className="text-sm text-emerald-300/50 mt-1">Enter a code to join an open room (max 4 players).</p>
+                                <p className="text-sm text-emerald-300/50 mt-1">Enter a code to join an open room. Bots fill remaining seats.</p>
                             </div>
                             <div className="space-y-1.5">
                                 <Label className="text-xs text-emerald-300/60">Soketi Application</Label>
@@ -978,20 +1038,26 @@ export default function TienLenPage() {
 
                             {/* Seat indicators */}
                             <div className="flex gap-3">
-                                {[0, 1, 2, 3].map((s) => (
-                                    <div key={s} className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
-                                        s < seats
-                                            ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300 shadow-md shadow-yellow-500/20'
-                                            : 'border-emerald-800/50 text-emerald-700'
-                                    }`}>
-                                        {s < seats ? (playerNames[s] || `P${s + 1}`).charAt(0).toUpperCase() : '?'}
-                                    </div>
-                                ))}
+                                {[0, 1, 2, 3].map((s) => {
+                                    const isBot = s >= maxPlayers;
+                                    const isFilled = s < seats;
+                                    return (
+                                        <div key={s} className={`w-11 h-11 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                                            isFilled
+                                                ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300 shadow-md shadow-yellow-500/20'
+                                                : isBot
+                                                    ? 'border-emerald-700/40 bg-emerald-900/30 text-emerald-500'
+                                                    : 'border-emerald-800/50 text-emerald-700'
+                                        }`}>
+                                            {isFilled ? (playerNames[s] || `P${s + 1}`).charAt(0).toUpperCase() : isBot ? '🤖' : '?'}
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             <div className="flex items-center gap-2 text-sm text-emerald-400/60">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                {seats}/4 players joined…
+                                {seats}/{maxPlayers} players joined…
                             </div>
 
                             <Badge variant={connected ? 'success' : 'secondary'} className="text-xs">
@@ -999,7 +1065,8 @@ export default function TienLenPage() {
                             </Badge>
 
                             <p className="text-xs text-emerald-400/50">
-                                You are <strong className="text-emerald-300/80">Seat {mySeat + 1}</strong>. Game starts automatically when all 4 seats are filled.
+                                You are <strong className="text-emerald-300/80">Seat {mySeat + 1}</strong>. Game starts when all {maxPlayers} human seats fill up
+                                {botSeats.length > 0 && <> — <span className="text-emerald-400/70">{botSeats.length} bot{botSeats.length > 1 ? 's' : ''} will join automatically</span></>}.
                             </p>
                         </div>
                         <div className="h-0.5 bg-gradient-to-r from-yellow-700/0 via-yellow-500/60 to-yellow-700/0" />

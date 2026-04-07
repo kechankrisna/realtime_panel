@@ -20,6 +20,7 @@ class TienLenController extends Controller
         $validated = $request->validate([
             'application_id' => ['required', 'integer'],
             'room_code' => ['required', 'string', 'max:10'],
+            'max_players' => ['required', 'integer', 'in:2,3,4'],
         ]);
 
         Application::ownershipAware()
@@ -31,6 +32,7 @@ class TienLenController extends Controller
             [
                 'status' => 'waiting',
                 'seats' => 1,
+                'max_players' => $validated['max_players'],
                 'application_id' => $validated['application_id'],
                 'creator_id' => Auth::id(),
             ],
@@ -65,15 +67,16 @@ class TienLenController extends Controller
             return response()->json(['message' => 'Wrong Soketi application for this room.'], 422);
         }
 
+        $maxPlayers = (int) ($room['max_players'] ?? 4);
         $newSeats = $room['seats'] + 1;
-        $newStatus = $newSeats >= 4 ? 'playing' : 'waiting';
+        $newStatus = $newSeats >= $maxPlayers ? 'playing' : 'waiting';
 
         Cache::put($key, array_merge($room, [
             'seats' => $newSeats,
             'status' => $newStatus,
         ]), now()->addMinutes(90));
 
-        return response()->json(['ok' => true, 'seats' => $newSeats, 'full' => $newSeats >= 4]);
+        return response()->json(['ok' => true, 'seats' => $newSeats, 'max_players' => $maxPlayers, 'full' => $newSeats >= $maxPlayers]);
     }
 
     /**

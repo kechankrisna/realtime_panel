@@ -167,6 +167,96 @@ graph LR
 
 ---
 
+## Performance on Constrained Hardware (1 GB RAM VM)
+
+> **Note:** The figures below are capacity estimates derived from per-component memory profiling and throughput modelling of the full Docker stack. They are not live benchmark numbers. Actual results will vary with CPU speed, network latency, payload size, and subscriber fan-out.
+
+### Memory Budget
+
+The five Docker containers share the host RAM. With MySQL tuned for a small instance, the full stack fits comfortably inside 1 GB:
+
+| Container | Default RAM | Tuned RAM |
+|-----------|-------------|-----------|
+| OS + Docker daemon | ~200 MB | ~200 MB |
+| `realtime-panel-mysql` | ~450 MB | ~200 MB |
+| `realtime-panel` (PHP-FPM × 3 workers) | ~135 MB | ~135 MB |
+| `realtime-websocket-server` (Soketi) | ~120 MB | ~120 MB |
+| `realtime-panel-redis` | ~25 MB | ~25 MB |
+| `realtime-panel-nginx` | ~15 MB | ~15 MB |
+| **Total** | **~945 MB ⚠️** | **~695 MB ✅** |
+
+With default MySQL settings the stack brushes the 1 GB ceiling. **MySQL must be tuned** (see below).
+
+### Concurrent WebSocket Connections
+
+Each open WebSocket connection in Soketi consumes roughly **10–15 KB** (Node.js heap entry + Linux kernel socket buffer). With ~120 MB available to Soketi on a 1 GB VM:
+
+| Scenario | Concurrent connections |
+|----------|----------------------|
+| Theoretical (Soketi memory only) | ~8,000 |
+| Practical (full stack, 1 GB VM) | **500 – 1,000 stable** |
+| Conservative safe operating point | **≤ 500** |
+
+Beyond ~1,000 connections the Node.js heap grows, OS socket table pressure increases, and MySQL connection overhead from reconnecting clients can cause latency spikes.
+
+### Message / Event Throughput
+
+There are two distinct event paths with very different throughput characteristics:
+
+**1. Server-triggered events** (via the Laravel API — `/api/chat/trigger`, `/api/chess/trigger`, etc.)
+
+Path: Browser → Nginx → PHP-FPM → Laravel → Pusher PHP SDK (HTTP) → Soketi
+
+With 3 PHP-FPM workers on a 1 GB VM:
+
+| Payload size | Estimated throughput |
+|---|---|
+| ≤ 1 KB | ~150 events / sec |
+| 1 – 10 KB | ~100 events / sec |
+| 10 – 100 KB | ~30 – 50 events / sec |
+
+**2. Pure Soketi relay** (client → Soketi → subscriber fan-out, no PHP involved)
+
+| Payload size | Estimated throughput |
+|---|---|
+| ≤ 1 KB | ~5,000 msg / sec |
+| 1 – 10 KB | ~3,000 msg / sec |
+| 10 – 100 KB | ~500 – 1,000 msg / sec |
+
+### MySQL Tuning for 1 GB
+
+Reduce the InnoDB buffer pool from its 500 MB+ default by passing flags to the MySQL container:
+
+```yaml
+# docker-compose.yml — realtime-panel-mysql service
+command: >
+  --innodb-buffer-pool-size=128M
+  --innodb-log-file-size=48M
+  --performance-schema=OFF
+  --max-connections=50
+```
+
+Or via `my.cnf`:
+
+```ini
+[mysqld]
+innodb_buffer_pool_size  = 128M
+innodb_log_file_size     = 48M
+performance_schema       = OFF
+max_connections          = 50
+```
+
+### Scaling Beyond 1 GB
+
+| RAM | Recommended max connections | Notes |
+|-----|-----------------------------|-------|
+| 1 GB | 500 – 1,000 | MySQL tuning required (see above) |
+| 2 GB | 2,000 – 4,000 | Default MySQL settings are fine |
+| 4 GB | 8,000 – 15,000 | Increase PHP-FPM workers to 8–10 |
+| 8 GB+ | 20,000+ | Consider horizontal Soketi scaling |
+
+---
+
 ## Quick Start with Docker
 
 **1. Clone the repository**

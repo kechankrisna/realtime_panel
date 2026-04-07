@@ -83,6 +83,81 @@ Full light / dark / system theme support persisted to `localStorage`.
 
 ---
 
+## Architecture
+
+### System Overview
+
+The application is a pure React SPA served through Nginx. All API calls go through PHP-FPM (Laravel), while WebSocket connections are proxied directly to Soketi. The Laravel backend triggers events into Soketi using the Pusher PHP SDK, and invalidates Soketi's Redis cache whenever an application's config changes.
+
+```mermaid
+graph TD
+    Browser["🌐 Browser\n(React 19 SPA)"]
+    Nginx["Nginx :80\n(reverse proxy)"]
+    FPM["PHP-FPM\nLaravel 12"]
+    Soketi["Soketi :6001\n(WebSocket Server)"]
+    MySQL["MySQL 8\napplications · users"]
+    Redis0["Redis DB 0\nSoketi app cache\nsoketi_app:{key}"]
+    Redis1["Redis DB 1\nLaravel cache\ngame rooms · CPU delta"]
+
+    Browser -->|"HTTP /api/*\nBearer token"| Nginx
+    Browser -->|"WebSocket /app/*\npusher-js"| Nginx
+    Nginx -->|"fastcgi_pass"| FPM
+    Nginx -->|"WS upgrade\n/app/* /apps/*"| Soketi
+    FPM -->|"reads · writes"| MySQL
+    FPM -->|"Cache::put/get\ngame rooms, CPU"| Redis1
+    FPM -->|"Pusher SDK\ntrigger events"| Soketi
+    FPM -->|"clearCache()\ndelete key"| Redis0
+    Soketi -->|"reads app config\non connection"| MySQL
+    Soketi -->|"caches config"| Redis0
+```
+
+### WebSocket Event Flow
+
+Every server-triggered event is **dual-broadcast**: once to the real channel and once to the monitor relay channel `_monitor_{appId}`. This guarantees the Live Monitor always receives events regardless of whether any other client is connected to the original channel.
+
+```mermaid
+sequenceDiagram
+    participant API as Laravel API
+    participant Soketi as Soketi WS Server
+    participant Monitor as Monitor Page
+    participant Client as Game / Chat Client
+
+    API->>Soketi: trigger(channel, eventName, data)
+    API->>Soketi: trigger('_monitor_{appId}', 'monitor.event',<br/>{channel, event, data})
+
+    Soketi-->>Client: push to 'channel' subscribers
+    Soketi-->>Monitor: push to '_monitor_{appId}' subscriber
+
+    Note over Monitor: Unwraps monitor.event<br/>Displays real channel, event name, and payload
+```
+
+### Redis Key Layout
+
+Soketi and Laravel use separate Redis databases to avoid key collisions.
+
+```mermaid
+graph LR
+    subgraph DB0 ["Redis DB 0 — Soketi"]
+        SK1["soketi_app:{id}"]
+        SK2["soketi_app:{key}"]
+    end
+    subgraph DB1 ["Redis DB 1 — Laravel"]
+        LK1["chess_room_{code}"]
+        LK2["tienlen_room_{code}"]
+        LK3["CPU metrics snapshot"]
+    end
+
+    Soketi1(Soketi) -->|"reads / writes on connect"| SK1
+    Soketi1 -->|"reads / writes on connect"| SK2
+    Laravel1("clearCache()") -->|"DELETE on app update"| SK1
+    Laravel1 -->|"DELETE on app update"| SK2
+    Laravel2(Laravel app) -->|"Cache::put / get"| LK1
+    Laravel2 -->|"Cache::put / get"| LK2
+    Laravel2 -->|"delta computation"| LK3
+```
+
+---
+
 ## Requirements
 
 - Docker & Docker Compose (recommended) **or**
@@ -374,6 +449,85 @@ Uses **Playwright** (Chromium). Requires the Docker stack (`docker compose up -d
 | `e2e/applications.spec.js` | Create, view key/secret, toggle enabled state |
 | `e2e/users.spec.js` | List, create, delete user via UI |
 | `e2e/websocket.spec.js` | Real Soketi message delivery (opt-in: `E2E_WEBSOCKET=1`) |
+
+---
+
+## Developer Guide
+
+### Authorization Flow
+
+Two ownership enforcement patterns exist in the codebase. Using the wrong one for a given endpoint type is a bug — CRUD resources return **403**, event triggers return **404**.
+
+```mermaid
+flowchart TD
+    Req["Incoming API Request"]
+    Auth{"Sanctum token\nvalid?"}
+    Unauth["401 Unauthenticated"]
+    Type{"Endpoint type?"}
+
+    subgraph CRUD ["CRUD Resource  (ApplicationController)"]
+        IsAdmin{"user.is_admin?"}
+        OwnCheck{"created_by\n== auth()->id()?"}
+        Err403["403 Forbidden"]
+        OkCRUD["✅ Proceed"]
+    end
+
+    subgraph Trigger ["Event Trigger  (Chat / Chess / TienLen)"]
+        TQ["Application::ownershipAware()\n  .where('enabled', true)\n  .findOrFail(id)"]
+        Found{"Record found?"}
+        Err404["404 Not Found"]
+        OkTrigger["✅ Proceed\n+ dual-broadcast"]
+    end
+
+    Req --> Auth
+    Auth -->|No| Unauth
+    Auth -->|Yes| Type
+    Type -->|Resource CRUD| IsAdmin
+    IsAdmin -->|Yes| OkCRUD
+    IsAdmin -->|No| OwnCheck
+    OwnCheck -->|No| Err403
+    OwnCheck -->|Yes| OkCRUD
+    Type -->|Event Trigger| TQ
+    TQ --> Found
+    Found -->|"No — wrong owner or disabled"| Err404
+    Found -->|Yes| OkTrigger
+```
+
+### Contributing — Adding a New Endpoint
+
+```mermaid
+flowchart TD
+    Start(["Add a new feature"])
+    Type{"What type?"}
+
+    subgraph BE ["Backend"]
+        CRUD["CRUD Resource Controller\n→ private authorizeOwnership()\n→ abort(403) on violation\n→ return full model or paginator"]
+        Trigger["Event Trigger Controller\n→ ownershipAware()->findOrFail()\n→ 404 on violation\n→ dual-broadcast to real + _monitor_ channel\n→ return {ok: true}"]
+        Route["Register in routes/api.php\nCustom routes BEFORE apiResource()"]
+        Migrate{"Needs a\nnew DB table?"}
+        Migration["php artisan make:migration\nUse \$table->ownerships() macro"]
+        Test["Write PHPUnit Feature test\n✓ owner can use endpoint\n✓ non-owner → 403 or 404\n✓ disabled app → 404\n✓ unauthenticated → 401\n✓ validation rejects missing fields"]
+    end
+
+    subgraph FE ["Frontend (if UI needed)"]
+        Page["Create resources/js/pages/section/Page.jsx\nimport api from '@/lib/axios'\nuseQuery + useMutation pattern"]
+        RouterAdd["Add createRoute() in router.jsx\nAdd to routeTree.addChildren([...])"]
+    end
+
+    Pint["php artisan pint"]
+    Done(["Commit"])
+
+    Start --> Type
+    Type -->|CRUD| CRUD --> Route
+    Type -->|Trigger| Trigger --> Route
+    Route --> Migrate
+    Migrate -->|Yes| Migration --> Test
+    Migrate -->|No| Test
+    Test --> NeedsUI{"Needs UI?"}
+    NeedsUI -->|Yes| Page --> RouterAdd --> Pint
+    NeedsUI -->|No| Pint
+    Pint --> Done
+```
 
 ---
 

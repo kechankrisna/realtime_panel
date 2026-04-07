@@ -56,9 +56,10 @@ services:
                     "${DB_USERNAME}",
                     "-p${DB_PASSWORD}",
                 ]
-            retries: 3
+            retries: 10
             timeout: 5s
             interval: 5s
+            start_period: 60s
 
     redis:
         image: "redis:7.2-alpine"

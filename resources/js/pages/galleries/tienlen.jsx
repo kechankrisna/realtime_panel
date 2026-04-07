@@ -369,6 +369,7 @@ export default function TienLenPage() {
     const [copied, setCopied]     = useState(false);
     const echoRef = useRef(null);
     const echoEventHandlerRef = useRef(null);
+    const socketIdRef = useRef(null);
 
     // Game state
     const [hands, setHands]           = useState([[], [], [], []]); // all 4 hands (only mine filled in multiplayer)
@@ -397,7 +398,7 @@ export default function TienLenPage() {
 
     const registerRoom = useMutation({ mutationFn: (body) => api.post('/tienlen/rooms', body) });
     const claimRoom    = useMutation({ mutationFn: (body) => api.post('/tienlen/rooms/join', body).then((r) => r.data) });
-    const tlTrigger    = useMutation({ mutationFn: (body) => api.post('/tienlen/trigger', body) });
+    const tlTrigger    = useMutation({ mutationFn: (body) => api.post('/tienlen/trigger', { ...body, socket_id: socketIdRef.current }) });
 
     const handleAppChange = (id) => {
         setAppId(id);
@@ -506,6 +507,7 @@ export default function TienLenPage() {
     }
 
     function applyPlay(seatIdx, play) {
+        const prevHandSize = hands[seatIdx]?.length ?? 0;
         const newHands = hands.map((h, i) => {
             if (i !== seatIdx) return h;
             const playIds = new Set(play.cards.map((c) => c.id));
@@ -520,8 +522,10 @@ export default function TienLenPage() {
         setPlayError('');
         setLastPlay({ seat: seatIdx, play });
 
-        // Check win
-        if (newHands[seatIdx].length === 0) {
+        // Only check win if we actually had this seat's hand (prevHandSize > 0).
+        // In multiplayer, non-local seats have hands=[] — we must not trigger a
+        // false win when removing cards from an empty array.
+        if (prevHandSize > 0 && newHands[seatIdx].length === 0) {
             const newWinners = [...winners, seatIdx];
             setWinners(newWinners);
             if (newWinners.length >= 3) return; // game over (4th is loser)
@@ -647,6 +651,7 @@ export default function TienLenPage() {
         echoRef.current = echo;
         const conn = echo.connector.pusher.connection;
         conn.bind('connected', () => {
+            socketIdRef.current = echo.connector.pusher.connection.socket_id;
             setConnected(true);
             // All players announce their seat once the WS connection is established
             setTimeout(() => {

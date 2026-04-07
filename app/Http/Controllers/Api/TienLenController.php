@@ -89,6 +89,7 @@ class TienLenController extends Controller
             'room_code' => ['required', 'string', 'max:50'],
             'type' => ['required', 'string', 'in:seat,deal,play,pass,win,chat'],
             'payload' => ['required', 'array'],
+            'socket_id' => ['nullable', 'string', 'max:100'],
         ]);
 
         $app = Application::where('enabled', true)
@@ -106,7 +107,12 @@ class TienLenController extends Controller
         $payload = array_merge(['type' => $validated['type']], $validated['payload']);
         $channel = 'tienlen-'.$validated['room_code'];
 
-        $pusher->trigger($channel, 'tienlen-event', $payload);
+        $triggerParams = [];
+        if (! empty($validated['socket_id'])) {
+            $triggerParams['socket_id'] = $validated['socket_id'];
+        }
+
+        $pusher->trigger($channel, 'tienlen-event', $payload, $triggerParams);
 
         // Relay to dedicated monitor channel.
         $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [

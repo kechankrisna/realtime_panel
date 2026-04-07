@@ -17,6 +17,12 @@ services:
             - ".:/var/www/html"
         networks:
             - soketi-network
+        healthcheck:
+            test: ["CMD", "php-fpm8.3", "-t"]
+            start_period: 120s
+            interval: 10s
+            retries: 5
+            timeout: 5s
 
     nginx:
         image: "nginx:stable-alpine3.17-slim"

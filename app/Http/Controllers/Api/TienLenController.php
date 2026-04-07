@@ -91,8 +91,7 @@ class TienLenController extends Controller
             'payload' => ['required', 'array'],
         ]);
 
-        $app = Application::ownershipAware()
-            ->where('enabled', true)
+        $app = Application::where('enabled', true)
             ->findOrFail($validated['application_id']);
 
         $options = config('broadcasting.connections.pusher.options');

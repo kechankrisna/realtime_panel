@@ -78,19 +78,22 @@ class TienLenTriggerTest extends TestCase
             ->assertUnprocessable();
     }
 
-    public function test_non_owner_gets_404(): void
+    public function test_non_owner_can_trigger_event(): void
     {
-        $user = User::factory()->create();
-        $other = User::factory()->create();
-        $app = Application::factory()->create(['created_by' => $other->id, 'enabled' => true]);
+        $this->mockPusher();
 
-        $this->actingAs($user, 'sanctum')
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $app = Application::factory()->create(['created_by' => $owner->id, 'enabled' => true]);
+
+        $this->actingAs($joiner, 'sanctum')
             ->postJson('/api/tienlen/trigger', [
                 'application_id' => $app->id,
                 'room_code' => 'TL001',
                 'type' => 'seat',
-                'payload' => ['seat' => 1],
+                'payload' => ['seat' => 1, 'name' => 'Player 2'],
             ])
-            ->assertNotFound();
+            ->assertOk()
+            ->assertJson(['ok' => true]);
     }
 }

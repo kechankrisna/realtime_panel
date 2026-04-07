@@ -395,7 +395,7 @@ export default function TienLenPage() {
     const apps = appsData?.data ?? [];
 
     const registerRoom = useMutation({ mutationFn: (body) => api.post('/tienlen/rooms', body) });
-    const claimRoom    = useMutation({ mutationFn: (body) => api.post('/tienlen/rooms/join', body) });
+    const claimRoom    = useMutation({ mutationFn: (body) => api.post('/tienlen/rooms/join', body).then((r) => r.data) });
     const tlTrigger    = useMutation({ mutationFn: (body) => api.post('/tienlen/trigger', body) });
 
     const handleAppChange = (id) => {
@@ -622,15 +622,6 @@ export default function TienLenPage() {
                         setScreen('lobby');
                     }
                     connectEcho(code, appKey, appId, mySeatIdx);
-                    // Announce seat
-                    setTimeout(() => {
-                        tlTrigger.mutate({
-                            application_id: Number(appId),
-                            room_code: code,
-                            type: 'seat',
-                            payload: { seat: mySeatIdx, name: user?.name ?? `Player ${mySeatIdx + 1}` },
-                        });
-                    }, 300);
                 },
                 onError: (err) => {
                     const status = err?.response?.status;
@@ -656,17 +647,15 @@ export default function TienLenPage() {
         const conn = echo.connector.pusher.connection;
         conn.bind('connected', () => {
             setConnected(true);
-            // Creator announces themselves
-            if (mySeatIdx === 0) {
-                setTimeout(() => {
-                    tlTrigger.mutate({
-                        application_id: Number(aid),
-                        room_code: code,
-                        type: 'seat',
-                        payload: { seat: 0, name: user?.name ?? 'Player 1' },
-                    });
-                }, 200);
-            }
+            // All players announce their seat once the WS connection is established
+            setTimeout(() => {
+                tlTrigger.mutate({
+                    application_id: Number(aid),
+                    room_code: code,
+                    type: 'seat',
+                    payload: { seat: mySeatIdx, name: user?.name ?? `Player ${mySeatIdx + 1}` },
+                });
+            }, 200);
         });
         conn.bind('disconnected', () => setConnected(false));
         conn.bind('failed',       () => setConnected(false));

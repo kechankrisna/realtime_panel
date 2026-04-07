@@ -423,6 +423,28 @@ docker compose exec realtime-panel php artisan app:update-admin
 
 ---
 
+## Deploying Updates
+
+A `deploy.sh` script is included for pushing code and/or UI updates to a running Docker stack:
+
+```bash
+bash deploy.sh
+```
+
+This runs, in order:
+1. `git pull` — pull latest code
+2. `docker compose --profile deploy run --rm deploy` — `npm install` + `npm run build` inside a `node:20-alpine` container
+3. `php artisan optimize:clear` — clear all caches
+4. `php artisan migrate --force` — apply any new migrations
+5. `php artisan optimize` — rebuild config/route/view cache
+
+To rebuild just the frontend assets without pulling code:
+```bash
+docker compose --profile deploy run --rm deploy
+```
+
+---
+
 ## Environment Variables
 
 Key variables to configure in `.env`:

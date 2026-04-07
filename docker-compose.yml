@@ -6,6 +6,7 @@ networks:
 volumes:
     mysql-data:
     redis-data:
+    node-modules:
 
 services:
     realtime-panel:
@@ -92,5 +93,17 @@ services:
             - redis
         volumes:
             - "./.env:/app/.env"
+        networks:
+            - soketi-network
+
+    deploy:
+        image: node:20-alpine
+        profiles: [deploy]
+        container_name: realtime-panel-deploy
+        working_dir: /app
+        volumes:
+            - ".:/app"
+            - "node-modules:/app/node_modules"
+        command: sh -c "npm install --no-audit --prefer-offline && npm run build"
         networks:
             - soketi-network

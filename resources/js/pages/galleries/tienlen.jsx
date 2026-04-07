@@ -368,6 +368,7 @@ export default function TienLenPage() {
     const [joinError, setJoinError] = useState('');
     const [copied, setCopied]     = useState(false);
     const echoRef = useRef(null);
+    const echoEventHandlerRef = useRef(null);
 
     // Game state
     const [hands, setHands]           = useState([[], [], [], []]); // all 4 hands (only mine filled in multiplayer)
@@ -665,19 +666,17 @@ export default function TienLenPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const handleEchoEvent = useCallback((e) => {
+    // Re-assigned on every render so applyPlay/applyPass always have fresh state.
+    // The stable handleEchoEvent callback delegates here to avoid stale closures.
+    echoEventHandlerRef.current = (e) => {
         if (e.type === 'seat') {
             setPlayerNames((prev) => {
                 const n = [...prev];
                 n[e.seat] = e.name;
                 return n;
             });
-            setSeats((prev) => {
-                const newSeats = Math.max(prev, e.seat + 1);
-                return newSeats;
-            });
+            setSeats((prev) => Math.max(prev, e.seat + 1));
         } else if (e.type === 'deal') {
-            // payload: { hands: [[...], null, null, null], turn, mySeat }
             // Each player only receives their own hand; others are null
             setHands((prev) => {
                 const updated = [...prev];
@@ -700,6 +699,10 @@ export default function TienLenPage() {
         } else if (e.type === 'win') {
             setWinners((prev) => [...new Set([...prev, e.seat])]);
         }
+    };
+
+    const handleEchoEvent = useCallback((e) => {
+        echoEventHandlerRef.current?.(e);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

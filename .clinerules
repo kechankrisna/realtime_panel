@@ -1,0 +1,264 @@
+# RealtimePanel — Cline AI Rules
+
+## Project Identity
+Self-hosted WebSocket management dashboard for Soketi (Pusher-protocol-compatible). Backend: PHP 8.3 / Laravel 12. Frontend: React 19 pure SPA. Infra: MySQL 8, Redis 7, Soketi, Nginx, Docker Compose.
+
+---
+
+## Absolute Rules (Never Violate)
+
+- Always run `php artisan pint` before committing PHP code
+- Always write a PHPUnit Feature test for every new API endpoint
+- Never add `$fillable` or `$guarded` to models — `Model::unguard()` is global in AppServiceProvider
+- Never modify `vendor/`, `bootstrap/cache/`, or `public/build/`
+- Never use Livewire or Alpine.js — frontend is a pure React SPA
+- Never add logic to Blade templates — `resources/views/app.blade.php` is only the SPA root shell
+
+---
+
+## Backend: File Locations
+
+- API controllers → `app/Http/Controllers/Api/`
+- Models → `app/Models/` (Application.php, User.php)
+- Services → `app/Services/` (PusherService.php, WebSocket/SoketiDriver.php)
+- Traits → `app/Traits/HasOwnership.php`
+- Contracts → `app/Contracts/WebSocketServerContract.php`
+- Routes → `routes/api.php`
+- Migrations → `database/migrations/`
+
+---
+
+## Backend: Authorization — Two Patterns (Critical)
+
+### CRUD resource controllers → 403 on violation
+```php
+private function authorizeOwnership(Application $application): void
+{
+    if (auth()->user()->is_admin) return;
+    if ($application->created_by !== auth()->id()) abort(403);
+}
+```
+Use this pattern in resource (CRUD) controllers only.
+
+### Event/trigger controllers → 404 on violation
+```php
+$app = Application::ownershipAware()
+    ->where('enabled', true)
+    ->findOrFail($validated['application_id']);
+```
+Use this pattern in any new event-trigger endpoint (Chat, Chess, TienLen style).
+
+The base `Controller` class has NO `authorizeOwnership` method. Do not invent one.
+
+---
+
+## Backend: Every Trigger Must Dual-Broadcast
+
+```php
+$pusher->trigger($channel, $eventName, $data);
+$pusher->trigger('_monitor_' . $app->id, 'monitor.event', [
+    'channel' => $channel,
+    'event'   => $eventName,
+    'data'    => $data,
+]);
+```
+
+---
+
+## Backend: After Any Application Update
+
+```php
+$application->update($data);
+$application->clearCache(); // deletes soketi_app:{key} from Redis — required
+```
+
+---
+
+## Backend: Migration Pattern
+
+```php
+Schema::create('table_name', function (Blueprint $table) {
+    $table->id();
+    // ... columns ...
+    $table->ownerships(); // macro: adds created_by + updated_by (nullable FK + index)
+    $table->timestamps();
+});
+```
+
+---
+
+## Backend: Route Registration Order
+
+Always declare custom/named routes BEFORE `apiResource()`:
+
+```php
+Route::get('/applications/stats', [ApplicationController::class, 'stats']);
+Route::get('/applications/{application}/channels', [...]);
+Route::patch('/applications/{application}/toggle', [...]);
+Route::apiResource('/applications', ApplicationController::class); // LAST
+```
+
+---
+
+## Backend: `POST /applications` Intentional Rule
+
+`store()` validates only `name` + `enabled`. Limit fields are SET only via `update()` (PUT). Do not add limit fields to `store()`.
+
+---
+
+## Backend: New Endpoint Checklist
+
+1. Controller in `app/Http/Controllers/Api/`
+2. Route inside `Route::middleware('auth:sanctum')->group(...)` in `routes/api.php`
+3. Named routes before `apiResource()` calls
+4. Correct ownership pattern (resource=403, trigger=404)
+5. `response()->json(['ok' => true])` for operations; full model for CRUD
+6. `$application->clearCache()` after any Application modification
+
+---
+
+## Frontend: File Locations
+
+- Pages → `resources/js/pages/<section>/`
+- Layout → `resources/js/components/layout/AppLayout`
+- UI components → `resources/js/components/ui/` (shadcn/ui)
+- API client → `resources/js/lib/axios.js`
+- Echo factory → `resources/js/lib/echo.js`
+- Router → `resources/js/router.jsx`
+- Hooks → `resources/js/hooks/` (useAuth, useTheme, useToast)
+
+---
+
+## Frontend: API Import (Always This Exact Import)
+
+```js
+import api from '@/lib/axios'
+```
+
+Never use `@/lib/api`. The file is `axios.js`. It auto-attaches Bearer token from localStorage and redirects to `/login` on 401.
+
+---
+
+## Frontend: Adding a New Route
+
+```jsx
+// 1. Create page: resources/js/pages/section/MyPage.jsx
+// 2. In router.jsx, add:
+const myRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/my-path',
+    component: MyPage,
+    beforeLoad: requireAuth, // required for all protected routes
+});
+// 3. Add myRoute to routeTree.addChildren([..., myRoute])
+```
+
+---
+
+## Frontend: Query and Mutation Pattern
+
+```jsx
+const { data, isLoading } = useQuery({
+    queryKey: ['key', param],
+    queryFn: () => api.get('/endpoint').then(r => r.data),
+});
+
+const mutation = useMutation({
+    mutationFn: (payload) => api.post('/endpoint', payload),
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['key'] });
+        toast({ title: 'Done!', variant: 'success' });
+    },
+    onError: (err) => {
+        if (err.response?.status === 422) setErrors(err.response.data.errors ?? {});
+    },
+});
+```
+
+---
+
+## Testing: New Test File Template
+
+```php
+<?php
+
+namespace Tests\Feature\Section;
+
+use App\Models\Application;
+use App\Models\User;
+use App\Services\PusherService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery\MockInterface;
+use Pusher\Pusher;
+use Tests\TestCase;
+
+class MyTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function mockPusher(): void
+    {
+        $pusher = $this->createMock(Pusher::class);
+        $pusher->method('trigger')->willReturn((object) []);
+
+        $this->mock(PusherService::class, function (MockInterface $mock) use ($pusher) {
+            $mock->shouldReceive('make')->andReturn($pusher);
+        });
+    }
+
+    // Required test cases per endpoint:
+    // - test_owner_can_use_endpoint
+    // - test_non_owner_gets_404 (trigger) OR test_non_owner_gets_403 (resource)
+    // - test_disabled_app_returns_404
+    // - test_unauthenticated_gets_401
+    // - test_validation_fails_with_missing_fields
+}
+```
+
+### Cache spy for update/toggle tests
+
+```php
+use Tests\Concerns\MocksWebSocketServer;
+
+class MyTest extends TestCase
+{
+    use RefreshDatabase, MocksWebSocketServer;
+
+    public function test_update_clears_cache(): void
+    {
+        $spy = $this->spyWebSocketServer();
+        // ... perform update request ...
+        $this->assertCacheClearedFor($app, $spy);
+    }
+}
+```
+
+Factory states: `Application::factory()->disabled()`, `User::factory()->inactive()`
+
+---
+
+## Commands
+
+```bash
+docker compose up -d        # start all services
+php artisan pint             # code style — run before every PHP commit
+php artisan test             # PHPUnit tests
+php artisan migrate          # run pending migrations
+php artisan optimize:clear   # clear all Laravel caches
+npm run dev                  # Vite dev server (hot reload)
+npm run build                # production build → public/build/
+npm run test                 # Vitest
+npx playwright test          # E2E tests
+```
+
+---
+
+## Key Facts to Remember
+
+- Soketi caches app config in Redis DB 0 under `soketi_app:{key}` AND `soketi_app:{id}`. `clearCache()` deletes both.
+- Laravel app cache lives in Redis DB 1. Game rooms stored there as `chess_room_{code}` / `tienlen_room_{code}`.
+- `is_admin` boolean on `users` — no spatie/laravel-permission installed.
+- Admin sees all applications. Non-admin only sees `created_by = auth()->id()` via `ownershipAware()` scope.
+- Default dev credentials: `admin@email.com` / `password`
+- `POST /applications` does NOT save limit fields (only `name` + `enabled`). This is intentional.
+- `_monitor_{appId}` channel receives copies of all events for the live Monitor page.

@@ -10,4 +10,5 @@ Artisan::command('inspire', function () {
 
 app()->booted(function () {
     app(Schedule::class)->command('cache:prune-stale-tags')->hourly();
+    app(Schedule::class)->command('app:metrics-snapshot')->everyMinute()->withoutOverlapping();
 });

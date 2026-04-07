@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\MetricsController;
+use App\Http\Controllers\Api\MetricsHistoryController;
 use App\Http\Controllers\Api\TienLenController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/config', [ConfigController::class, 'index']);
     Route::get('/metrics', [MetricsController::class, 'index']);
+    Route::get('/metrics/history', [MetricsHistoryController::class, 'index']);
 
     Route::get('/applications/stats', [ApplicationController::class, 'stats']);
     Route::get('/applications/{application}/channels', [ApplicationController::class, 'channels']);

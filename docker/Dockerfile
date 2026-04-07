@@ -35,6 +35,10 @@ RUN apt-get update \
     php$PHP_VERSION-ldap php$PHP_VERSION-curl php$PHP_VERSION-msgpack \
     php$PHP_VERSION-igbinary php$PHP_VERSION-redis php$PHP_VERSION-pcov
 
+# Install Node.js 20 LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
 # Install composer
 COPY --from=composer:2.7.2 /usr/bin/composer /usr/bin/composer
 

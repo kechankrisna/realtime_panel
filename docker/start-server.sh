@@ -9,6 +9,12 @@ if [ ! -d vendor ]; then
     gosu soketi composer install --no-interaction
 fi
 
+if [ ! -d public/build ]; then
+    echo "Installing JS dependencies and building frontend assets..."
+    gosu soketi npm install --no-audit --prefer-offline
+    gosu soketi npm run build
+fi
+
 if grep -q "^APP_KEY=\s*$" .env; then
     echo "Generating application key..."
     gosu soketi php artisan key:generate -q

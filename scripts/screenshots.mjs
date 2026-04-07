@@ -48,6 +48,7 @@ async function navigate(page, url) {
             '--disable-setuid-sandbox',
             '--disable-gpu',
             '--disable-dev-shm-usage',
+            '--ignore-certificate-errors',
             '--force-device-scale-factor=1',
             `--window-size=${W},${H}`,
         ],

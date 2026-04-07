@@ -276,7 +276,14 @@ Open `.env` and set `DB_*`, `REDIS_*`, `SUPER_USER_*`, and `SOKETI_*` variables.
 docker compose up -d --build
 ```
 
-**4. Run full setup** (generates app key, runs migrations, links storage, creates super admin)
+**4. Wait for the container to be ready**
+
+On first boot the container automatically runs `composer install` and `npm run build`. This takes **2–3 minutes**. Wait until you see `Starting php-fpm server...`:
+```bash
+docker compose logs -f realtime-panel | grep -m1 "Starting php-fpm server"
+```
+
+**5. Run full setup** (generates app key, runs migrations, links storage, creates super admin)
 ```bash
 docker compose exec realtime-panel php artisan app:setup
 ```
@@ -367,6 +374,8 @@ soketi start
 - Port `80` is exposed through nginx by default. Set `APP_PORT` in `.env` before running `docker compose up -d` if there is a conflict.
 - Nginx proxies WebSocket connections — no need to expose Soketi port `6001` directly. Use `APP_PORT` for all traffic.
 - Set `SUPER_USER_EMAIL` and `SUPER_USER_PASSWORD` in `.env` before running `app:setup` to control the initial admin credentials.
+- MySQL and Redis data are stored in **named Docker volumes** (`mysql-data`, `redis-data`) — not in `./docker/data/`. This avoids host filesystem permission issues on Linux.
+- On **first boot**, the container automatically runs `composer install` and `npm run build`. Wait ~2–3 minutes before running `app:setup`.
 
 **1. Clone the repo**
 ```bash
@@ -385,7 +394,14 @@ Edit `.env` — set `APP_PORT`, `DB_*`, `REDIS_*`, `SUPER_USER_*`, and `SOKETI_*
 docker compose up -d --build
 ```
 
-**4. Run full setup inside the container**
+**4. Wait for the container to be ready**
+
+The container runs `composer install` + `npm run build` on first start. Wait until PHP-FPM is up:
+```bash
+docker compose logs -f realtime-panel | grep -m1 "Starting php-fpm server"
+```
+
+**5. Run full setup inside the container**
 (generates app key → runs migrations → links storage → clears cache → creates super admin)
 ```bash
 docker compose exec realtime-panel php artisan app:setup

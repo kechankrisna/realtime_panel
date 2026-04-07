@@ -21,4 +21,6 @@ yarn-error.log
 soketi.json
 soketi.docker.json
 /docker/data
+/docker/certs
+/docker/certs
 *.bak

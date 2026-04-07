@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
 # Root based on Dockerfile WORKDIR
+# Fix ownership so the soketi user can write to the mounted volume
+chown -R soketi:soketi /var/www/html
+
 if [ ! -d vendor ]; then
     echo "Installing application dependencies..."
-    gosu soketi composer install
+    gosu soketi composer install --no-interaction
 fi
 
 if grep -q "^APP_KEY=\s*$" .env; then

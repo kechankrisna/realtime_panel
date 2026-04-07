@@ -3,6 +3,10 @@ networks:
         name: realtime-panel-network
         driver: bridge
 
+volumes:
+    mysql-data:
+    redis-data:
+
 services:
     realtime-panel:
         build:
@@ -54,7 +58,7 @@ services:
             MYSQL_USER: "${DB_USERNAME}"
             MYSQL_PASSWORD: "${DB_PASSWORD}"
         volumes:
-            - "./docker/data/mysql:/var/lib/mysql"
+            - "mysql-data:/var/lib/mysql"
         networks:
             - soketi-network
         healthcheck:
@@ -75,11 +79,9 @@ services:
     redis:
         image: "redis:7.2-alpine"
         container_name: realtime-panel-redis
-        user: root
-        command: >
-            sh -c "chown -R redis:redis /data && exec gosu redis redis-server --save 60 1 --loglevel warning --requirepass \"${REDIS_PASSWORD}\""
         volumes:
-            - "./docker/data/redis:/data"
+            - "redis-data:/data"
+        command: redis-server --save 60 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"
         networks:
             - soketi-network
 

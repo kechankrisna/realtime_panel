@@ -11,7 +11,7 @@ function applyTheme(theme) {
 
 export function useTheme() {
     const [theme, setThemeState] = useState(
-        () => localStorage.getItem(STORAGE_KEY) ?? 'dark'
+        () => localStorage.getItem(STORAGE_KEY) ?? 'system'
     );
 
     useEffect(() => {

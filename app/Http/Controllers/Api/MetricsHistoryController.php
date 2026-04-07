@@ -19,8 +19,9 @@ class MetricsHistoryController extends Controller
             : 'live';
 
         $applicationId = $request->query('application_id');
+        $tz = $this->resolveTimezone($request->query('timezone'));
 
-        [$from, $to, $bucketExpr] = $this->resolvePeriod($period);
+        [$from, $to, $bucketExpr] = $this->resolvePeriod($period, $tz);
 
         $query = DB::table('metric_snapshots')
             ->selectRaw("{$bucketExpr} AS label, ROUND(AVG(connections)) AS connections")
@@ -56,7 +57,22 @@ class MetricsHistoryController extends Controller
         ]);
     }
 
-    private function resolvePeriod(string $period): array
+    private function resolveTimezone(?string $tz): string
+    {
+        if ($tz === null || $tz === '') {
+            return 'UTC';
+        }
+
+        try {
+            new \DateTimeZone($tz);
+
+            return $tz;
+        } catch (\Exception) {
+            return 'UTC';
+        }
+    }
+
+    private function resolvePeriod(string $period, string $tz): array
     {
         $isSqlite = DB::getDriverName() === 'sqlite';
 
@@ -85,41 +101,46 @@ class MetricsHistoryController extends Controller
             };
         }
 
+        $nowUtc = now($tz)->utc();
+        $todayInTz = today($tz);
+        $quotedTz = DB::connection()->getPdo()->quote($tz);
+        $col = "CONVERT_TZ(recorded_at, 'UTC', {$quotedTz})";
+
         return match ($period) {
             'live' => [
-                now()->subHour(),
-                now(),
-                "DATE_FORMAT(recorded_at, '%H:%i')",
+                $nowUtc->copy()->subHour(),
+                $nowUtc,
+                "DATE_FORMAT({$col}, '%H:%i')",
             ],
             'today' => [
-                today(),
-                now(),
-                'FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(recorded_at)/900)*900)',
+                $todayInTz->copy()->utc(),
+                $nowUtc,
+                "CONCAT(DATE_FORMAT({$col}, '%H:'), LPAD(FLOOR(MINUTE({$col})/15)*15, 2, '0'))",
             ],
             'yesterday' => [
-                today()->subDay(),
-                today(),
-                'FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(recorded_at)/1800)*1800)',
+                $todayInTz->copy()->subDay()->utc(),
+                $todayInTz->copy()->utc(),
+                "CONCAT(DATE_FORMAT({$col}, '%H:'), LPAD(FLOOR(MINUTE({$col})/30)*30, 2, '0'))",
             ],
             'this_week' => [
-                today()->startOfWeek(),
-                now(),
-                "DATE_FORMAT(recorded_at, '%a %H:00')",
+                $todayInTz->copy()->startOfWeek()->utc(),
+                $nowUtc,
+                "DATE_FORMAT({$col}, '%a %H:00')",
             ],
             'last_week' => [
-                today()->subWeek()->startOfWeek(),
-                today()->subWeek()->endOfWeek(),
-                "DATE_FORMAT(recorded_at, '%a %H:00')",
+                $todayInTz->copy()->subWeek()->startOfWeek()->utc(),
+                $todayInTz->copy()->subWeek()->endOfWeek()->utc(),
+                "DATE_FORMAT({$col}, '%a %H:00')",
             ],
             'this_month' => [
-                today()->startOfMonth(),
-                now(),
-                'DATE(recorded_at)',
+                $todayInTz->copy()->startOfMonth()->utc(),
+                $nowUtc,
+                "DATE({$col})",
             ],
             'last_month' => [
-                today()->subMonth()->startOfMonth(),
-                today()->subMonth()->endOfMonth(),
-                'DATE(recorded_at)',
+                $todayInTz->copy()->subMonth()->startOfMonth()->utc(),
+                $todayInTz->copy()->subMonth()->endOfMonth()->utc(),
+                "DATE({$col})",
             ],
         };
     }

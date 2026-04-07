@@ -30,13 +30,16 @@ export function MetricsHistoryWidget() {
         queryFn: () => api.get('/applications').then((r) => r.data.data),
     });
 
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     const { data: historyData, isPending } = useQuery({
-        queryKey: ['metrics-history', period, applicationId],
+        queryKey: ['metrics-history', period, applicationId, timezone],
         queryFn: () =>
             api
                 .get('/metrics/history', {
                     params: {
                         period,
+                        timezone,
                         ...(applicationId !== 'all' && { application_id: applicationId }),
                     },
                 })

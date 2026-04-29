@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\EventTriggerController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MetricsHistoryController;
 use App\Http\Controllers\Api\TienLenController;
@@ -33,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/applications/stats', [ApplicationController::class, 'stats']);
     Route::get('/applications/{application}/channels', [ApplicationController::class, 'channels']);
     Route::patch('/applications/{application}/toggle', [ApplicationController::class, 'toggle']);
+    Route::post('/applications/{application}/trigger', [EventTriggerController::class, 'trigger']);
     Route::apiResource('/applications', ApplicationController::class);
 
     Route::apiResource('/users', UserController::class);

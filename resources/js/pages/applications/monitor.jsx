@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { createEcho } from '@/lib/echo';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/useToast';
 import {
     ChevronLeft, Activity, Wifi, WifiOff, Trash2, Pause, Play,
-    Download, ChevronDown, ChevronRight, Circle,
+    Download, ChevronDown, ChevronRight, Circle, Send, Zap,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -167,6 +168,161 @@ function EventRow({ ev, selected, onSelect }) {
 }
 
 // ---------------------------------------------------------------------------
+// Shared table column definitions — used by EventCreator + event log header
+// + event log body so all three tables align under table-fixed layout.
+// ---------------------------------------------------------------------------
+
+function TableCols() {
+    return (
+        <colgroup>
+            <col className="w-4" />
+            <col className="w-44" />
+            <col />
+            <col />
+            <col />
+            <col className="w-5" />
+        </colgroup>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// EventCreator
+// ---------------------------------------------------------------------------
+
+function EventCreator({ appId }) {
+    const [open, setOpen] = useState(false);
+    const [channel, setChannel] = useState('');
+    const [event, setEvent] = useState('');
+    const [data, setData] = useState('');
+    const [dataError, setDataError] = useState('');
+    const [eventError, setEventError] = useState('');
+
+    const mutation = useMutation({
+        mutationFn: (payload) => api.post(`/applications/${appId}/trigger`, payload),
+    });
+
+    const handleSend = () => {
+        setDataError('');
+        setEventError('');
+
+        if (/^pusher/i.test(event)) {
+            setEventError('Event name cannot start with "pusher" — reserved by the Pusher protocol.');
+            return;
+        }
+
+        let parsed = null;
+        if (data.trim()) {
+            try {
+                parsed = JSON.parse(data);
+            } catch {
+                setDataError('Invalid JSON');
+                return;
+            }
+        }
+
+        mutation.mutate(
+            { channel, event, data: parsed !== null ? JSON.stringify(parsed) : null },
+            {
+                onSuccess: () => {
+                    setData('');
+                    setDataError('');
+                    toast({ title: 'Event sent', variant: 'success' });
+                },
+                onError: (err) => {
+                    toast({
+                        title: err.response?.data?.message ?? 'Failed to send event',
+                        variant: 'destructive',
+                    });
+                },
+            },
+        );
+    };
+
+    return (
+        <div className="rounded-xl border border-border bg-card flex-shrink-0">
+            <button
+                onClick={() => setOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+                <span className="flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 text-yellow-500" />
+                    Event Creator
+                </span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {open && (
+                <div className="border-t border-border">
+                    <table className="w-full text-xs table-fixed">
+                        <TableCols />
+                        <tbody>
+                            <tr>
+                                {/* dot col */}
+                                <td className="pl-3 pr-2 py-2 w-4">
+                                    <Zap className="h-2 w-2 text-yellow-500 fill-yellow-500" />
+                                </td>
+                                {/* timestamp col — shows "now" placeholder */}
+                                <td className="px-2 py-2 w-44 font-mono text-muted-foreground/30 whitespace-nowrap">
+                                    now
+                                </td>
+                                {/* event col */}
+                                <td className="px-2 py-2">
+                                    <Input
+                                        placeholder="event-name"
+                                        value={event}
+                                        onChange={(e) => { setEvent(e.target.value); setEventError(''); }}
+                                        className={`h-7 text-xs font-mono ${eventError ? 'border-red-500' : ''}`}
+                                    />
+                                </td>
+                                {/* channel col */}
+                                <td className="px-2 py-2">
+                                    <Input
+                                        placeholder="channel-name"
+                                        value={channel}
+                                        onChange={(e) => setChannel(e.target.value)}
+                                        className="h-7 text-xs font-mono"
+                                    />
+                                </td>
+                                {/* data col */}
+                                <td className="px-2 py-2">
+                                    <Input
+                                        placeholder='{"key":"value"}'
+                                        value={data}
+                                        onChange={(e) => { setData(e.target.value); setDataError(''); }}
+                                        className={`h-7 text-xs font-mono ${dataError ? 'border-red-500' : ''}`}
+                                    />
+                                </td>
+                                {/* send col */}
+                                <td className="pr-3 py-2 w-5">
+                                    <button
+                                        onClick={handleSend}
+                                        disabled={!channel || !event || mutation.isPending}
+                                        className="flex items-center justify-center h-6 w-6 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        title="Send Event"
+                                    >
+                                        {mutation.isPending
+                                            ? <span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin block" />
+                                            : <Send className="h-3 w-3" />}
+                                    </button>
+                                </td>
+                            </tr>
+                            {(eventError || dataError) && (
+                                <tr>
+                                    <td colSpan={6} className="px-3 pb-2">
+                                        {eventError && <p className="text-[11px] text-red-500">{eventError}</p>}
+                                        {dataError && <p className="text-[11px] text-red-500">{dataError}</p>}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -176,6 +332,7 @@ export default function ApplicationMonitorPage() {
     const { data: app, isLoading } = useQuery({
         queryKey: ['application', id],
         queryFn: () => api.get(`/applications/${id}`).then((r) => r.data),
+        staleTime: 5 * 60 * 1000,
     });
 
     const [events, setEvents] = useState([]);
@@ -413,6 +570,9 @@ export default function ApplicationMonitorPage() {
                     </div>
                 )}
 
+                {/* Event Creator */}
+                {app && <EventCreator appId={app.id} />}
+
                 {/* Controls */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="relative flex-1 max-w-xs">
@@ -463,7 +623,8 @@ export default function ApplicationMonitorPage() {
                 <div className="flex-1 rounded-xl border border-border bg-card overflow-hidden flex flex-col min-h-0">
                     {/* Table header */}
                     <div className="border-b border-border bg-muted/30">
-                        <table className="w-full text-xs">
+                        <table className="w-full text-xs table-fixed">
+                            <TableCols />
                             <thead>
                                 <tr>
                                     <th className="pl-3 pr-2 py-2 w-4"></th>
@@ -491,7 +652,8 @@ export default function ApplicationMonitorPage() {
                                 </p>
                             </div>
                         ) : (
-                            <table className="w-full text-xs">
+                            <table className="w-full text-xs table-fixed">
+                                <TableCols />
                                 <tbody>
                                     {displayed.map((ev) => (
                                         <EventRow

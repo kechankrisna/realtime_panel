@@ -5,8 +5,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ChessController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\EventTriggerController;
 use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\MetricsHistoryController;
+use App\Http\Controllers\Api\SoketiWebhookController;
 use App\Http\Controllers\Api\TienLenController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/webhooks/soketi/{appId}', [SoketiWebhookController::class, 'receive']);
 
 // Authenticated
 Route::middleware('auth:sanctum')->group(function () {
@@ -33,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/applications/stats', [ApplicationController::class, 'stats']);
     Route::get('/applications/{application}/channels', [ApplicationController::class, 'channels']);
     Route::patch('/applications/{application}/toggle', [ApplicationController::class, 'toggle']);
+    Route::post('/applications/{application}/trigger', [EventTriggerController::class, 'trigger']);
     Route::apiResource('/applications', ApplicationController::class);
 
     Route::apiResource('/users', UserController::class);

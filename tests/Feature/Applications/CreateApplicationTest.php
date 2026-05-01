@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Applications;
 
+use App\Models\Application;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -48,7 +49,7 @@ class CreateApplicationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        \App\Models\Application::factory()->create([
+        Application::factory()->create([
             'name' => 'Duplicate',
             'created_by' => $user->id,
         ]);

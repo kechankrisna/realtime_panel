@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -6,10 +7,11 @@ export default defineConfig({
     retries: 0,
     reporter: 'list',
     use: {
-        baseURL: 'http://localhost',
+        baseURL: 'https://localhost',
         headless: true,
         screenshot: 'only-on-failure',
         video: 'off',
+        ignoreHTTPSErrors: true,
     },
     projects: [
         {

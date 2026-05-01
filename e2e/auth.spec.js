@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = 'admin@email.com';
-const ADMIN_PASSWORD = 'password';
+const ADMIN_EMAIL = process.env.SUPER_USER_EMAIL || 'admin@email.com';
+const ADMIN_PASSWORD = process.env.SUPER_USER_PASSWORD || 'password';
 
 test.describe('Authentication', () => {
     test.beforeEach(async ({ page }) => {
@@ -35,8 +35,9 @@ test.describe('Authentication', () => {
         await page.getByRole('button', { name: /sign in|login/i }).click();
         await expect(page).toHaveURL(/\/(dashboard)?$/);
 
-        // Log out
-        await page.getByRole('button', { name: /logout|sign out/i }).click();
+        // Log out (click the user avatar button in the sidebar, then sign out)
+        await page.getByRole('button').filter({ has: page.locator('.rounded-full') }).click();
+        await page.getByRole('menuitem', { name: /sign out/i }).click();
 
         await expect(page).toHaveURL(/\/login/);
     });

@@ -48,8 +48,8 @@ function CreateDialog() {
                 <div className="space-y-4 py-2">
                     {[['Name', 'name', 'text'], ['Email', 'email', 'email'], ['Password', 'password', 'password']].map(([label, field, type]) => (
                         <div key={field} className="space-y-2">
-                            <Label>{label}</Label>
-                            <Input type={type} value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} required={field !== 'password' || form.password.length > 0} />
+                            <Label htmlFor={`create-user-${field}`}>{label}</Label>
+                            <Input id={`create-user-${field}`} aria-label={label} type={type} value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} required={field !== 'password' || form.password.length > 0} />
                             {errors[field] && <p className="text-xs text-destructive">{errors[field][0]}</p>}
                         </div>
                     ))}

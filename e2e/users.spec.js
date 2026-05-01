@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = 'admin@email.com';
-const ADMIN_PASSWORD = 'password';
+const ADMIN_EMAIL = process.env.SUPER_USER_EMAIL || 'admin@email.com';
+const ADMIN_PASSWORD = process.env.SUPER_USER_PASSWORD || 'password';
 
 async function loginAs(page, email = ADMIN_EMAIL, password = ADMIN_PASSWORD) {
     await page.goto('/');
@@ -45,10 +45,11 @@ test.describe('Users', () => {
         });
         const { token } = await loginResp.json();
 
-        const createResp = await api.post('/api/users', {
+        const userEmail = `delete-me-${Date.now()}@test.com`;
+        await api.post('/api/users', {
             data: JSON.stringify({
                 name: 'Delete Me',
-                email: `delete-me-${Date.now()}@test.com`,
+                email: userEmail,
                 password: 'password123',
                 is_admin: false,
                 is_active: true,
@@ -59,15 +60,19 @@ test.describe('Users', () => {
                 'Authorization': `Bearer ${token}`,
             },
         });
-        const createdUser = await createResp.json();
 
         await page.goto('/users');
 
-        // Find and delete the user
-        const row = page.getByText('Delete Me').first().locator('..');
-        await row.getByRole('button', { name: /delete|remove/i }).click();
-        await page.getByRole('button', { name: /confirm|yes|delete/i }).click();
+        // Navigate to the user's edit page via the edit link in their specific row
+        const row = page.getByRole('row').filter({ hasText: userEmail }).first();
+        await expect(row).toBeVisible({ timeout: 10_000 });
+        await row.getByRole('link').click();
 
-        await expect(page.getByText('Delete Me')).toBeHidden({ timeout: 10_000 });
+        // Click Delete on the edit page, then confirm
+        await page.getByRole('button', { name: /^delete$/i }).click();
+        await page.getByRole('button', { name: /^delete$/i }).click();
+
+        await expect(page).toHaveURL(/\/users$/);
+        await expect(page.getByText(userEmail)).toBeHidden({ timeout: 10_000 });
     });
 });

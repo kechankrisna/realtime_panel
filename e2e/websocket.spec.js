@@ -8,8 +8,8 @@
 
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = 'admin@email.com';
-const ADMIN_PASSWORD = 'password';
+const ADMIN_EMAIL = process.env.SUPER_USER_EMAIL || 'admin@email.com';
+const ADMIN_PASSWORD = process.env.SUPER_USER_PASSWORD || 'password';
 const API_BASE = 'http://localhost/api';
 
 async function getToken(request) {

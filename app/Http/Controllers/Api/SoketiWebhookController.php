@@ -37,13 +37,17 @@ class SoketiWebhookController extends Controller
         );
 
         foreach ($events as $event) {
-            $pusher->trigger('_monitor_'.$app->id, 'monitor.webhook', [
-                'name' => $event['name'] ?? null,
-                'channel' => $event['channel'] ?? null,
-                'event' => $event['event'] ?? null,
-                'data' => $event['data'] ?? null,
-                'socket_id' => $event['socket_id'] ?? null,
-            ]);
+            try {
+                $pusher->trigger('_monitor_'.$app->id, 'monitor.webhook', [
+                    'name' => $event['name'] ?? null,
+                    'channel' => $event['channel'] ?? null,
+                    'event' => $event['event'] ?? null,
+                    'data' => $event['data'] ?? null,
+                    'socket_id' => $event['socket_id'] ?? null,
+                ]);
+            } catch (\Throwable $e) {
+                logger()->error("Failed to relay webhook event to monitor channel for app {$app->id}: ".$e->getMessage());
+            }
         }
 
         return response()->json(['ok' => true]);

@@ -35,8 +35,8 @@ test.describe('Authentication', () => {
         await page.getByRole('button', { name: /sign in|login/i }).click();
         await expect(page).toHaveURL(/\/(dashboard)?$/);
 
-        // Log out (click profile dropdown, then sign out)
-        await page.getByRole('button', { name: /admin/i }).click();
+        // Log out (click the user avatar button in the sidebar, then sign out)
+        await page.getByRole('button').filter({ has: page.locator('.rounded-full') }).click();
         await page.getByRole('menuitem', { name: /sign out/i }).click();
 
         await expect(page).toHaveURL(/\/login/);

@@ -38,7 +38,9 @@ function UserMenu({ user, expanded, side, onOpenChange }) {
     return (
         <DropdownMenu onOpenChange={onOpenChange}>
             <DropdownMenuTrigger asChild>
-                <button className={cn(
+                <button
+                    aria-label={user?.name}
+                    className={cn(
                     'flex w-full items-center rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent focus:outline-none',
                     expanded ? 'gap-3' : 'justify-center'
                 )}>
@@ -226,32 +228,23 @@ export function Sidebar({ pinned, onPinToggle }) {
                     <ThemeToggle expanded={expanded} />
                 </div>
 
-                {/* User section */}
+                {/* User section — keep UserMenu always mounted to avoid remounting the DropdownMenu */}
                 <div className="shrink-0 border-t p-2">
-                    {!expanded ? (
-                        <TooltipProvider delayDuration={0}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div>
-                                        <UserMenu
-                                            user={user}
-                                            expanded={false}
-                                            side="right"
-                                            onOpenChange={handleDropdownChange}
-                                        />
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">{user?.name}</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ) : (
-                        <UserMenu
-                            user={user}
-                            expanded={true}
-                            side="right"
-                            onOpenChange={handleDropdownChange}
-                        />
-                    )}
+                    <TooltipProvider delayDuration={0}>
+                        <Tooltip open={expanded ? false : undefined}>
+                            <TooltipTrigger asChild>
+                                <div>
+                                    <UserMenu
+                                        user={user}
+                                        expanded={expanded}
+                                        side="right"
+                                        onOpenChange={handleDropdownChange}
+                                    />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">{user?.name}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </aside>
 

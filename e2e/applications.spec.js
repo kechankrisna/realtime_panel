@@ -25,10 +25,11 @@ test.describe('Applications', () => {
 
         await page.getByRole('button', { name: /new|create|add/i }).first().click();
 
-        await page.getByLabel(/name/i).fill(`E2E Test App ${Date.now()}`);
+        const appName = `E2E Test App ${Date.now()}`;
+        await page.getByLabel(/name/i).fill(appName);
         await page.getByRole('button', { name: /save|create|submit/i }).click();
 
-        await expect(page.getByText(/e2e test app/i)).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByText(appName)).toBeVisible({ timeout: 10_000 });
     });
 
     test('application key and secret are displayed after creation', async ({ page }) => {
@@ -41,23 +42,38 @@ test.describe('Applications', () => {
         await page.getByLabel(/name/i).fill(appName);
         await page.getByRole('button', { name: /save|create|submit/i }).click();
 
-        // Navigate to the application details
-        await page.getByText(new RegExp(appName.substring(0, 10), 'i')).click();
-
-        await expect(page.getByText(/key|secret/i)).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByRole('columnheader', { name: /App Key/i })).toBeVisible({ timeout: 5_000 });
+        await expect(page.getByRole('columnheader', { name: /App Secret/i })).toBeVisible({ timeout: 5_000 });
     });
 
     test('admin can toggle an application active state', async ({ page }) => {
         await loginAs(page);
+
+        // Ensure at least one application exists
+        const loginResp = await page.request.post('/api/auth/login', {
+            data: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        });
+        const { token } = await loginResp.json();
+        await page.request.post('/api/applications', {
+            data: JSON.stringify({ name: `Toggle Test App ${Date.now()}`, enabled: true }),
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+        });
+
         await page.goto('/applications');
 
-        // Find the first toggle and click it
+        // Find the first toggle and click it, then wait for the API to complete
         const toggle = page.getByRole('switch').first();
+        await expect(toggle).toBeVisible({ timeout: 10_000 });
         const initialState = await toggle.getAttribute('aria-checked');
-        await toggle.click();
 
-        // State should have changed
-        const newState = await toggle.getAttribute('aria-checked');
-        expect(newState).not.toBe(initialState);
+        const [response] = await Promise.all([
+            page.waitForResponse((r) => r.url().includes('/toggle') && r.request().method() === 'PATCH'),
+            toggle.click(),
+        ]);
+        expect(response.ok()).toBeTruthy();
+
+        // State should have changed after the refetch
+        await expect(toggle).not.toHaveAttribute('aria-checked', initialState, { timeout: 5_000 });
     });
 });

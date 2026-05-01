@@ -55,7 +55,7 @@ function CreateDialog({ onCreated }) {
                 <div className="space-y-4 py-2">
                     <div className="space-y-2">
                         <Label htmlFor="create-name">Name</Label>
-                        <Input id="create-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required maxLength={100} />
+                        <Input id="create-name" aria-label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required maxLength={100} />
                         {errors.name && <p className="text-xs text-destructive">{errors.name[0]}</p>}
                     </div>
                     <div className="flex items-center gap-3">

@@ -46,6 +46,5 @@ class Application extends Model
         ];
 
         $this->update(['webhooks' => $webhooks]);
-        $this->clearCache();
     }
 }

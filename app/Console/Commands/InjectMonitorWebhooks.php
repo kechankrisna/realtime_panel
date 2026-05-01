@@ -19,6 +19,7 @@ class InjectMonitorWebhooks extends Command
 
         foreach ($apps as $app) {
             $app->injectMonitorWebhook();
+            $app->clearCache();
             $bar->advance();
         }
 

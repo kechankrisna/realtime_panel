@@ -96,8 +96,8 @@ class ApplicationController extends Controller
         $data['updated_by'] = auth()->id();
 
         $application->update($data);
-        $application->clearCache();
         $application->injectMonitorWebhook();
+        $application->clearCache();
 
         return response()->json($application->fresh()->load(['creator:id,name', 'updater:id,name']));
     }

@@ -7,10 +7,11 @@ export default defineConfig({
     retries: 0,
     reporter: 'list',
     use: {
-        baseURL: 'http://localhost',
+        baseURL: 'https://localhost',
         headless: true,
         screenshot: 'only-on-failure',
         video: 'off',
+        ignoreHTTPSErrors: true,
     },
     projects: [
         {

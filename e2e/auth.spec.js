@@ -35,8 +35,9 @@ test.describe('Authentication', () => {
         await page.getByRole('button', { name: /sign in|login/i }).click();
         await expect(page).toHaveURL(/\/(dashboard)?$/);
 
-        // Log out
-        await page.getByRole('button', { name: /logout|sign out/i }).click();
+        // Log out (click profile dropdown, then sign out)
+        await page.getByRole('button', { name: /admin/i }).click();
+        await page.getByRole('menuitem', { name: /sign out/i }).click();
 
         await expect(page).toHaveURL(/\/login/);
     });

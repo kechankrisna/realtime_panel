@@ -48,6 +48,7 @@ class ApplicationController extends Controller
         $data['created_by'] = auth()->id();
 
         $app = Application::create($data);
+        $app->injectMonitorWebhook();
 
         return response()->json($app->load(['creator:id,name', 'updater:id,name']), 201);
     }
@@ -96,6 +97,7 @@ class ApplicationController extends Controller
 
         $application->update($data);
         $application->clearCache();
+        $application->injectMonitorWebhook();
 
         return response()->json($application->fresh()->load(['creator:id,name', 'updater:id,name']));
     }

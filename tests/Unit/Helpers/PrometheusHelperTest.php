@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Helpers;
 
+use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 class PrometheusHelperTest extends TestCase
@@ -54,7 +55,7 @@ class PrometheusHelperTest extends TestCase
     {
         $result = parse_prometheus('soketi_connected_clients', '');
 
-        $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+        $this->assertInstanceOf(Collection::class, $result);
     }
 
     public function test_trims_quotes_from_label_values(): void

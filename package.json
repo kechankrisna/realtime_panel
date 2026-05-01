@@ -17,6 +17,7 @@
         "@vitejs/plugin-react": "^4.7.0",
         "autoprefixer": "^10.4.27",
         "axios": "^1.14.0",
+        "dotenv": "^17.4.2",
         "jsdom": "^26.1.0",
         "laravel-vite-plugin": "^1.0.0",
         "postcss": "^8.5.8",

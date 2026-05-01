@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\Application;
+use App\Models\MetricSnapshot;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\MetricSnapshot>
+ * @extends Factory<MetricSnapshot>
  */
 class MetricSnapshotFactory extends Factory
 {

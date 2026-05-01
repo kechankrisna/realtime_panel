@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const ADMIN_EMAIL = 'admin@email.com';
-const ADMIN_PASSWORD = 'password';
+const ADMIN_EMAIL = process.env.SUPER_USER_EMAIL || 'admin@email.com';
+const ADMIN_PASSWORD = process.env.SUPER_USER_PASSWORD || 'password';
 
 test.describe('Authentication', () => {
     test.beforeEach(async ({ page }) => {

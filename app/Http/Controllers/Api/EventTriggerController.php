@@ -18,13 +18,13 @@ class EventTriggerController extends Controller
 
         $validated = $request->validate([
             'channel' => ['required', 'string', 'max:200'],
-            'event'   => ['required', 'string', 'max:200', 'not_regex:/^pusher/i'],
-            'data'    => ['nullable', 'string', 'json'],
+            'event' => ['required', 'string', 'max:200', 'not_regex:/^pusher/i'],
+            'data' => ['nullable', 'string', 'json'],
         ], [
             'event.not_regex' => 'Event name cannot start with "pusher" — that prefix is reserved by the Pusher protocol.',
         ]);
 
-        $data = isset($validated['data']) ? json_decode($validated['data'], true) : new \stdClass();
+        $data = isset($validated['data']) ? json_decode($validated['data'], true) : new \stdClass;
 
         $options = config('broadcasting.connections.pusher.options');
 
@@ -43,8 +43,8 @@ class EventTriggerController extends Controller
         if ($validated['channel'] !== '_monitor_'.$app->id) {
             $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
                 'channel' => $validated['channel'],
-                'event'   => $validated['event'],
-                'data'    => $data,
+                'event' => $validated['event'],
+                'data' => $data,
             ]);
         }
 

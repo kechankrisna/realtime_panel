@@ -25,15 +25,19 @@ function eventCategory(eventName) {
     if (eventName.startsWith('pusher:')) return 'system';
     if (eventName.startsWith('pusher_internal:')) return 'internal';
     if (eventName.startsWith('client-')) return 'client';
+    if (eventName.startsWith('channel.')) return 'lifecycle';
+    if (eventName.startsWith('presence.')) return 'presence';
     return 'server';
 }
 
 const CATEGORY_STYLE = {
-    system:   { dot: 'bg-zinc-400',   badge: 'bg-zinc-100 text-zinc-600 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',   row: '' },
-    internal: { dot: 'bg-yellow-500', badge: 'bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-900/60 dark:text-yellow-300 dark:border-yellow-800', row: 'bg-yellow-50/60 dark:bg-yellow-950/10' },
-    client:   { dot: 'bg-blue-400',   badge: 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800',             row: 'bg-blue-50/60 dark:bg-blue-950/10' },
-    server:   { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-800', row: 'bg-emerald-50/60 dark:bg-emerald-950/10' },
-    unknown:  { dot: 'bg-zinc-400',   badge: 'bg-zinc-100 text-zinc-500 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-500 dark:border-zinc-800',               row: '' },
+    system:    { dot: 'bg-zinc-400',    badge: 'bg-zinc-100 text-zinc-600 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700',       row: '' },
+    internal:  { dot: 'bg-yellow-500',  badge: 'bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-900/60 dark:text-yellow-300 dark:border-yellow-800',   row: 'bg-yellow-50/60 dark:bg-yellow-950/10' },
+    client:    { dot: 'bg-blue-400',    badge: 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800',               row: 'bg-blue-50/60 dark:bg-blue-950/10' },
+    server:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-800', row: 'bg-emerald-50/60 dark:bg-emerald-950/10' },
+    lifecycle: { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900/60 dark:text-amber-300 dark:border-amber-800',           row: 'bg-amber-50/60 dark:bg-amber-950/10' },
+    presence:  { dot: 'bg-violet-500',  badge: 'bg-violet-50 text-violet-700 border-violet-300 dark:bg-violet-900/60 dark:text-violet-300 dark:border-violet-800',     row: 'bg-violet-50/60 dark:bg-violet-950/10' },
+    unknown:   { dot: 'bg-zinc-400',    badge: 'bg-zinc-100 text-zinc-500 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-500 dark:border-zinc-800',                   row: '' },
 };
 
 function tryParseData(raw) {
@@ -261,10 +265,6 @@ function EventCreator({ appId }) {
                                 <td className="pl-3 pr-2 py-2 w-4">
                                     <Zap className="h-2 w-2 text-yellow-500 fill-yellow-500" />
                                 </td>
-                                {/* timestamp col — shows "now" placeholder */}
-                                <td className="px-2 py-2 w-44 font-mono text-muted-foreground/30 whitespace-nowrap">
-                                    now
-                                </td>
                                 {/* event col */}
                                 <td className="px-2 py-2">
                                     <Input
@@ -420,6 +420,20 @@ export default function ApplicationMonitorPage() {
                             eventName = inner?.event ?? eventName;
                             channel   = inner?.channel ?? channel;
                             data      = inner?.data ?? null;
+                        }
+
+                        // Unwrap Soketi webhook events relayed through the monitor channel
+                        if (eventName === 'monitor.webhook' && channel === monitorChannel) {
+                            const inner = typeof data === 'string' ? JSON.parse(data) : data;
+                            const name  = inner?.name ?? '';
+                            eventName = name === 'client_event'    ? (inner.event ?? 'client_event')
+                                      : name === 'channel_occupied' ? 'channel.occupied'
+                                      : name === 'channel_vacated'  ? 'channel.vacated'
+                                      : name === 'member_added'     ? 'presence.member_added'
+                                      : name === 'member_removed'   ? 'presence.member_removed'
+                                      : name;
+                            channel = inner?.channel ?? null;
+                            data    = inner?.data    ?? null;
                         }
 
                         const ev = {
@@ -672,7 +686,7 @@ export default function ApplicationMonitorPage() {
                     <div className="border-t border-border px-3 py-1.5 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
                             {Object.entries(CATEGORY_STYLE).filter(([k]) => k !== 'unknown').map(([cat, s]) => (
-                                <span key={cat} className="flex items-center gap-1">
+                                <span key={cat} className="flex items-center gap-1 capitalize">
                                     <Circle className={`h-1.5 w-1.5 fill-current ${s.dot.replace('bg-', 'text-')}`} />
                                     {cat}
                                 </span>

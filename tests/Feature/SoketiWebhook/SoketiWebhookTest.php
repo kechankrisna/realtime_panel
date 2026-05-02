@@ -8,11 +8,12 @@ use App\Services\PusherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery\MockInterface;
 use Pusher\Pusher;
+use Tests\Concerns\MocksWebSocketServer;
 use Tests\TestCase;
 
 class SoketiWebhookTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, MocksWebSocketServer;
 
     private function makePusherSpy(): Pusher
     {
@@ -176,6 +177,7 @@ class SoketiWebhookTest extends TestCase
     public function test_update_auto_injects_monitor_webhook(): void
     {
         $this->makePusherSpy();
+        $this->mockWebSocketServer();
         /** @var User $user */
         $user = User::factory()->create(['is_admin' => true]);
         /** @var Application $app */
@@ -211,6 +213,7 @@ class SoketiWebhookTest extends TestCase
     public function test_inject_webhooks_artisan_command(): void
     {
         $this->makePusherSpy();
+        $this->mockWebSocketServer();
         Application::factory()->count(3)->create(['webhooks' => []]);
 
         $this->artisan('monitor:inject-webhooks')->assertSuccessful();

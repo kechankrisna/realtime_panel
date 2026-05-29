@@ -389,19 +389,30 @@ cp .env.example .env
 ```
 Edit `.env` — set `APP_PORT`, `DB_*`, `REDIS_*`, `SUPER_USER_*`, and `SOKETI_*` variables.
 
-**3. Build and start all containers**
+**3. Generate SSL certificates**
+
+The Nginx container requires TLS certificates at `docker/certs/origin.key` and `docker/certs/origin.pem`. Use your own certificates (e.g. Let's Encrypt) or generate self-signed ones for testing:
+
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout docker/certs/origin.key \
+  -out docker/certs/origin.pem \
+  -subj "/CN=your-server-ip-or-domain"
+```
+
+**4. Build and start all containers**
 ```bash
 docker compose up -d --build
 ```
 
-**4. Wait for the container to be ready**
+**5. Wait for the container to be ready**
 
 The container runs `composer install` + `npm run build` on first start. Wait until PHP-FPM is up:
 ```bash
 docker compose logs -f realtime-panel | grep -m1 "Starting php-fpm server"
 ```
 
-**5. Run full setup inside the container**
+**6. Run full setup inside the container**
 (generates app key → runs migrations → links storage → clears cache → creates super admin)
 ```bash
 docker compose exec realtime-panel php artisan app:setup

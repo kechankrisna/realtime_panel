@@ -14,7 +14,11 @@ class PusherProxyController extends Controller
     {
         $app = Application::where('id', $appId)
             ->where('enabled', true)
-            ->firstOrFail();
+            ->first();
+
+        if (! $app) {
+            return response()->json(['error' => 'Application not found'], 404);
+        }
 
         if (! $this->verifySignature($request, $app->key, $app->secret, $appId)) {
             return response()->json(['error' => 'Invalid signature'], 401);
@@ -34,16 +38,20 @@ class PusherProxyController extends Controller
         $options = config('broadcasting.connections.pusher.options');
         $pusher = app(PusherService::class)->make($app->key, $app->secret, $app->id, $options);
 
-        foreach ($channels as $channel) {
-            $pusher->trigger($channel, $eventName, $data);
+        try {
+            foreach ($channels as $channel) {
+                $pusher->trigger($channel, $eventName, $data);
 
-            if ($channel !== '_monitor_'.$app->id) {
-                $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
-                    'channel' => $channel,
-                    'event' => $eventName,
-                    'data' => $data,
-                ]);
+                if ($channel !== '_monitor_'.$app->id) {
+                    $pusher->trigger('_monitor_'.$app->id, 'monitor.event', [
+                        'channel' => $channel,
+                        'event' => $eventName,
+                        'data' => $data,
+                    ]);
+                }
             }
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Broadcast failed', 'message' => $e->getMessage()], 502);
         }
 
         // Pusher REST API returns an empty object on success — must be {} not []

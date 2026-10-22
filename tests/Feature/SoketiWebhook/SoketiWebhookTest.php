@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class SoketiWebhookTest extends TestCase
 {
-    use RefreshDatabase, MocksWebSocketServer;
+    use MocksWebSocketServer, RefreshDatabase;
 
     private function makePusherSpy(): Pusher
     {

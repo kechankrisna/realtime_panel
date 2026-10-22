@@ -124,6 +124,7 @@ class ApplicationController extends Controller
     {
         $this->authorizeOwnership($application);
         $application->delete();
+        $application->clearCache();
 
         return response()->json(['ok' => true]);
     }

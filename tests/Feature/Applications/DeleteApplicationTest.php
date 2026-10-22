@@ -5,11 +5,31 @@ namespace Tests\Feature\Applications;
 use App\Models\Application;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\MocksWebSocketServer;
 use Tests\TestCase;
 
 class DeleteApplicationTest extends TestCase
 {
-    use RefreshDatabase;
+    use MocksWebSocketServer, RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->mockWebSocketServer();
+    }
+
+    public function test_delete_clears_cache(): void
+    {
+        $spy = $this->spyWebSocketServer();
+        $user = User::factory()->create();
+        $app = Application::factory()->create(['created_by' => $user->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->deleteJson("/api/applications/{$app->id}")
+            ->assertOk();
+
+        $this->assertCacheClearedFor($app, $spy);
+    }
 
     public function test_owner_can_delete_own_application(): void
     {

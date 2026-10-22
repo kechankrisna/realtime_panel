@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { createEcho } from '@/lib/echo';
+import { useRealtimeEndpoint } from '@/hooks/useRealtimeEndpoint';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/useToast';
@@ -457,13 +458,16 @@ export default function ApplicationMonitorPage() {
     // Connect Echo when app key is available.
     // setTimeout(0) prevents React Strict Mode's synchronous cleanup from closing
     // a WebSocket that is still in CONNECTING state.
+    // where to reach Soketi; undefined until the config has loaded
+    const endpoint = useRealtimeEndpoint();
+
     useEffect(() => {
-        if (!app?.key || !app?.id) return;
+        if (!app?.key || !app?.id || endpoint === undefined) return;
 
         const appId = app.id;
         let echo = null;
         const timer = setTimeout(() => {
-            echo = createEcho({ key: app.key });
+            echo = createEcho({ key: app.key }, endpoint);
             echoRef.current = echo;
             const pusher = echo.connector.pusher;
             const conn = pusher.connection;
@@ -493,7 +497,7 @@ export default function ApplicationMonitorPage() {
             }
             setConnected(false);
         };
-    }, [app?.key, app?.id, patchSocket]);
+    }, [app?.key, app?.id, patchSocket, endpoint]);
 
     // Filtered events
     const filterLower = filter.toLowerCase();

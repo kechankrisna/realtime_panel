@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/axios';
+import { configQuery, docsEndpoint } from '@/lib/realtime';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 function CodeBlock({ children }) {
@@ -20,13 +20,10 @@ function Section({ title, children }) {
 }
 
 export default function ServerDocPage() {
-    const { data: cfg } = useQuery({
-        queryKey: ['config'],
-        queryFn: () => api.get('/config').then((r) => r.data),
-    });
+    const { data: cfg } = useQuery(configQuery);
 
-    const host = cfg?.app_host ?? 'your-server';
-    const port = cfg?.app_port ?? '6001';
+    // where servers reach Soketi (SOKETI_PUBLIC_*, else this panel's own URL)
+    const { host, port, scheme, tls } = docsEndpoint(cfg);
     const appUrl = cfg?.app_url ?? 'http://your-server';
     const appName = cfg?.app_name ?? 'realtimepanel';
 
@@ -47,7 +44,7 @@ PUSHER_APP_KEY=YOUR_APP_KEY
 PUSHER_APP_SECRET=YOUR_APP_SECRET
 PUSHER_HOST=${host}
 PUSHER_PORT=${port}
-PUSHER_SCHEME=http
+PUSHER_SCHEME=${scheme}
 PUSHER_APP_CLUSTER=mt1`}</CodeBlock>
                     <p className="text-sm text-muted-foreground">In <code className="text-xs bg-muted px-1 rounded">config/broadcasting.php</code>:</p>
                     <CodeBlock>{`'pusher' => [
@@ -58,16 +55,21 @@ PUSHER_APP_CLUSTER=mt1`}</CodeBlock>
     'options' => [
         'host' => env('PUSHER_HOST', '${host}'),
         'port' => env('PUSHER_PORT', ${port}),
-        'scheme' => env('PUSHER_SCHEME', 'http'),
+        'scheme' => env('PUSHER_SCHEME', '${scheme}'),
         'encrypted' => true,
-        'useTLS' => env('PUSHER_SCHEME', 'http') === 'https',
+        'useTLS' => env('PUSHER_SCHEME', '${scheme}') === 'https',
         'cluster' => env('PUSHER_APP_CLUSTER', 'mt1'),
     ],
 ],`}</CodeBlock>
                 </Section>
 
                 <Section title="Triggering Events via HTTP API">
-                    <p className="text-sm text-muted-foreground">Soketi exposes the standard Pusher HTTP API at <code className="text-xs bg-muted px-1 rounded">{appUrl}</code>.</p>
+                    <p className="text-sm text-muted-foreground">
+                        This panel accepts the standard Pusher HTTP API at <code className="text-xs bg-muted px-1 rounded">{appUrl}</code>: it
+                        forwards each event to Soketi and copies it to the Live Monitor. Events sent straight to Soketi
+                        (<code className="text-xs bg-muted px-1 rounded">{`${scheme}://${host}:${port}`}</code>, the settings above) are
+                        delivered too, but the Live Monitor does not see them.
+                    </p>
                     <CodeBlock>{`# Trigger an event
 curl -X POST '${appUrl}/apps/YOUR_APP_ID/events' \\
   -H 'Content-Type: application/json' \\
@@ -87,8 +89,8 @@ curl -X POST '${appUrl}/apps/YOUR_APP_ID/events' \\
     [
         'host' => '${host}',
         'port' => ${port},
-        'scheme' => 'http',
-        'encrypted' => false,
+        'scheme' => '${scheme}',
+        'encrypted' => ${tls},
     ]
 );
 
@@ -105,7 +107,7 @@ const pusher = new Pusher({
     secret: 'YOUR_APP_SECRET',
     host: '${host}',
     port: '${port}',
-    useTLS: false,
+    useTLS: ${tls},
 });
 
 pusher.trigger('my-channel', 'my-event', { message: 'Hello!' });`}</CodeBlock>

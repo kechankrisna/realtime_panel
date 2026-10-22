@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/axios';
+import { configQuery, docsEndpoint } from '@/lib/realtime';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 function CodeBlock({ children }) {
@@ -20,13 +20,10 @@ function Section({ title, children }) {
 }
 
 export default function ClientDocPage() {
-    const { data: cfg } = useQuery({
-        queryKey: ['config'],
-        queryFn: () => api.get('/config').then((r) => r.data),
-    });
+    const { data: cfg } = useQuery(configQuery);
 
-    const host = cfg?.app_host ?? 'your-server';
-    const port = cfg?.app_port ?? '6001';
+    // where clients reach Soketi (SOKETI_PUBLIC_*, else this panel's own URL)
+    const { host, port, tls } = docsEndpoint(cfg);
     const appName = cfg?.app_name ?? 'realtimepanel';
 
     return (
@@ -52,8 +49,8 @@ const echo = new Echo({
     wsHost: '${host}',
     wsPort: ${port},
     wssPort: ${port},
-    forceTLS: false,
-    encrypted: false,
+    forceTLS: ${tls},
+    encrypted: ${tls},
     disableStats: true,
     enabledTransports: ['ws', 'wss'],
     cluster: 'mt1',
@@ -71,9 +68,10 @@ echo.channel('my-channel').listen('.my-event', (e) => {
 const pusher = new Pusher('YOUR_APP_KEY', {
     wsHost: '${host}',
     wsPort: ${port},
-    forceTLS: false,
+    wssPort: ${port},
+    forceTLS: ${tls},
     cluster: 'mt1',
-    enabledTransports: ['ws'],
+    enabledTransports: ['ws', 'wss'],
 });
 
 const channel = pusher.subscribe('my-channel');

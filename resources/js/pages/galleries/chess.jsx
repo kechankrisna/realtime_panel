@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createEcho } from '@/lib/echo';
+import { useRealtimeEndpoint } from '@/hooks/useRealtimeEndpoint';
 import { ChevronLeft, Bot, LogIn, Crown, Copy, Check, RotateCcw, Flag, Loader2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -214,6 +215,9 @@ export default function ChessPage() {
     // Disconnect Echo on unmount
     useEffect(() => () => { echoRef.current?.disconnect(); }, []);
 
+    // loads the config, so it is there when a room is opened (undefined until then: createEcho reads the cache)
+    const endpoint = useRealtimeEndpoint();
+
     const { data: appsData } = useQuery({
         queryKey: ['applications-all'],
         queryFn: () => api.get('/applications', { params: { per_page: 999 } }).then((r) => r.data),
@@ -262,7 +266,7 @@ export default function ChessPage() {
             echoRef.current.disconnect();
             echoRef.current = null;
         }
-        const echo = createEcho({ key: currentAppKey });
+        const echo = createEcho({ key: currentAppKey }, endpoint);
         echoRef.current = echo;
         const conn = echo.connector.pusher.connection;
         conn.bind('connected', () => {

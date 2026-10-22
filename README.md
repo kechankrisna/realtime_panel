@@ -502,7 +502,34 @@ SOKETI_DB_MYSQL_DATABASE=realtime_panel
 SOKETI_DB_REDIS_HOST=redis
 SOKETI_DB_REDIS_PASSWORD=password
 SOKETI_METRICS_ENABLED=true
+
+# Optional: Soketi on its own public host (see below)
+SOKETI_PUBLIC_HOST=
+SOKETI_PUBLIC_PORT=
+SOKETI_PUBLIC_SCHEME=
 ```
+
+### Separate Soketi host
+
+By default the panel's live pages (Live Monitor, Chat, the galleries) open their WebSocket to the page's own host, and
+the bundled nginx forwards `/app/*` to Soketi. When Soketi has its own public name instead — e.g. the panel on
+`realtime-panel.example.com`, Soketi on `pusher.example.com` (a separate Soketi service, as in the Coolify layout) —
+set:
+
+```dotenv
+SOKETI_PUBLIC_HOST=pusher.example.com
+SOKETI_PUBLIC_PORT=443        # optional: 443 for https, 80 for http
+SOKETI_PUBLIC_SCHEME=https    # optional: the scheme of APP_URL
+```
+
+The browser then connects to `wss://pusher.example.com`, and the Documentation pages show that host. `GET /api/config`
+returns it as `soketi_public` (`configured: true`; `false` when the values are derived from `APP_URL`). An `https` panel
+needs `SOKETI_PUBLIC_SCHEME=https`: browsers block a plain `ws://` connection from an `https` page.
+
+These settings are only what clients see. The panel's own server-side calls keep using `PUSHER_HOST` / `PUSHER_PORT` /
+`PUSHER_SCHEME`, which should stay the internal Soketi address (e.g. `soketi:6001`, `http`) — never a public name that
+leads back to this panel, or the event proxy (`POST /apps/{id}/events`) would call itself. The Live Monitor sees server
+events only when they are sent through that proxy (the panel's URL), not when they go straight to Soketi.
 
 ---
 

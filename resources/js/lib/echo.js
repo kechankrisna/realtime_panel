@@ -1,17 +1,21 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { queryClient } from '@/lib/queryClient';
+import { configQuery, configuredEndpoint, echoConnectionOptions } from '@/lib/realtime';
 
 window.Pusher = Pusher;
 
-export function createEcho(app) {
+/**
+ * endpoint: from useRealtimeEndpoint() ({ host, port, scheme }, or null for the page's own host). Left out, the config
+ * already in the query cache decides (pages that connect on a click, long after it loaded).
+ */
+export function createEcho(app, endpoint) {
+    const target = endpoint !== undefined ? endpoint : configuredEndpoint(queryClient.getQueryData(configQuery.queryKey));
+
     return new Echo({
         broadcaster: 'pusher',
         key: app.key,
-        wsHost: window.location.hostname,
-        wsPort: window.location.port || (window.location.protocol === 'https:' ? 443 : 80),
-        wssPort: window.location.port || 443,
-        forceTLS: window.location.protocol === 'https:',
-        encrypted: window.location.protocol === 'https:',
+        ...echoConnectionOptions(target),
         disableStats: true,
         enabledTransports: ['ws', 'wss'],
         cluster: 'mt1',

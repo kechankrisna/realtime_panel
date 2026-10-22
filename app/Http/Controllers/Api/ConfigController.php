@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\SoketiPublicEndpoint;
 use Illuminate\Http\JsonResponse;
 
 class ConfigController extends Controller
@@ -18,6 +19,8 @@ class ConfigController extends Controller
             'app_url' => $url,
             'app_host' => $parsed['host'] ?? 'localhost',
             'app_port' => env('APP_PORT', 6001),
+            // where clients reach Soketi (config/soketi.php)
+            'soketi_public' => SoketiPublicEndpoint::fromConfig()->toArray(),
         ]);
     }
 }

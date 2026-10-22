@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createEcho } from '@/lib/echo';
+import { useRealtimeEndpoint } from '@/hooks/useRealtimeEndpoint';
 import { ChevronLeft, Bot, LogIn, Users, Copy, Check, RotateCcw, Loader2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -642,12 +643,15 @@ export default function TienLenPage() {
     // ---------------------------------------------------------------------------
     // Echo
     // ---------------------------------------------------------------------------
+    // loads the config, so it is there when a room is opened (undefined until then: createEcho reads the cache)
+    const endpoint = useRealtimeEndpoint();
+
     const connectEcho = useCallback((code, key, aid, mySeatIdx) => {
         if (echoRef.current) {
             echoRef.current.disconnect();
             echoRef.current = null;
         }
-        const echo = createEcho({ key });
+        const echo = createEcho({ key }, endpoint);
         echoRef.current = echo;
         const conn = echo.connector.pusher.connection;
         conn.bind('connected', () => {
@@ -669,7 +673,7 @@ export default function TienLenPage() {
 
         echo.channel(`tienlen-${code}`).listen('.tienlen-event', handleEchoEvent);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, endpoint]);
 
     // Re-assigned on every render so applyPlay/applyPass always have fresh state.
     // The stable handleEchoEvent callback delegates here to avoid stale closures.

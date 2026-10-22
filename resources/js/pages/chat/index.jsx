@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { createEcho } from '@/lib/echo';
+import { useRealtimeEndpoint } from '@/hooks/useRealtimeEndpoint';
 import { Send } from 'lucide-react';
 
 export default function ChatPage() {
@@ -32,15 +33,18 @@ export default function ChatPage() {
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
     // Connect / disconnect Echo when app selection changes
+    // where to reach Soketi; undefined until the config has loaded
+    const endpoint = useRealtimeEndpoint();
+
     useEffect(() => {
         if (echoRef.current) {
             echoRef.current.disconnect();
             echoRef.current = null;
             setConnected(false);
         }
-        if (!appKey || !channel) return;
+        if (!appKey || !channel || endpoint === undefined) return;
 
-        const echo = createEcho({ key: appKey });
+        const echo = createEcho({ key: appKey }, endpoint);
         echoRef.current = echo;
 
         // Track connection state via Pusher native connection events
@@ -59,7 +63,7 @@ export default function ChatPage() {
             echoRef.current = null;
             setConnected(false);
         };
-    }, [appKey, channel]);
+    }, [appKey, channel, endpoint]);
 
     const trigger = useMutation({
         mutationFn: (msg) => api.post('/chat/trigger', {
